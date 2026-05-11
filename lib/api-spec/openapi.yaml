@@ -1,22 +1,31 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: NCST LMS API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: courses
+  - name: modules
+  - name: files
+  - name: quizzes
+  - name: questions
+  - name: submissions
+  - name: grades
+  - name: alerts
+  - name: enrollments
+  - name: users
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +33,1572 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+
+  # ─── USERS ──────────────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin)
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── COURSES ────────────────────────────────────────────────────────────────
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List courses
+      responses:
+        "200":
+          description: Courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create course (teacher/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /courses/{id}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    patch:
+      operationId: updateCourse
+      tags: [courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /courses/{id}/dashboard:
+    get:
+      operationId: getCourseDashboard
+      tags: [courses]
+      summary: Get course stats summary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseDashboard"
+
+  # ─── ENROLLMENTS ────────────────────────────────────────────────────────────
+  /enrollments:
+    get:
+      operationId: listEnrollments
+      tags: [enrollments]
+      summary: List enrollments
+      responses:
+        "200":
+          description: Enrollments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Enrollment"
+    post:
+      operationId: createEnrollment
+      tags: [enrollments]
+      summary: Enroll student in course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnrollmentInput"
+      responses:
+        "201":
+          description: Enrolled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+
+  /enrollments/{id}:
+    delete:
+      operationId: deleteEnrollment
+      tags: [enrollments]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  # ─── MODULES ────────────────────────────────────────────────────────────────
+  /courses/{courseId}/modules:
+    get:
+      operationId: listModules
+      tags: [modules]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Modules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Module"
+    post:
+      operationId: createModule
+      tags: [modules]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModuleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Module"
+
+  /modules/{id}:
+    patch:
+      operationId: updateModule
+      tags: [modules]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModuleUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Module"
+    delete:
+      operationId: deleteModule
+      tags: [modules]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── FILES / CONTENT ────────────────────────────────────────────────────────
+  /modules/{moduleId}/files:
+    get:
+      operationId: listFiles
+      tags: [files]
+      parameters:
+        - name: moduleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseFile"
+
+  /files:
+    post:
+      operationId: createFile
+      tags: [files]
+      summary: Upload file metadata (multipart handled separately)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseFile"
+
+  /files/{id}:
+    delete:
+      operationId: deleteFile
+      tags: [files]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+
+  # ─── QUIZZES / EXAMS ────────────────────────────────────────────────────────
+  /courses/{courseId}/quizzes:
+    get:
+      operationId: listQuizzes
+      tags: [quizzes]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quiz"
+    post:
+      operationId: createQuiz
+      tags: [quizzes]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{id}:
+    get:
+      operationId: getQuiz
+      tags: [quizzes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+    patch:
+      operationId: updateQuiz
+      tags: [quizzes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+    delete:
+      operationId: deleteQuiz
+      tags: [quizzes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /quizzes/{id}/start:
+    post:
+      operationId: startQuiz
+      tags: [quizzes]
+      summary: Start quiz attempt (lockdown begins)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartQuizInput"
+      responses:
+        "200":
+          description: Attempt started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+
+  /quizzes/{id}/attempts:
+    get:
+      operationId: listQuizAttempts
+      tags: [quizzes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attempts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuizAttempt"
+
+  # ─── QUESTIONS ──────────────────────────────────────────────────────────────
+  /quizzes/{quizId}/questions:
+    get:
+      operationId: listQuestions
+      tags: [questions]
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+    post:
+      operationId: createQuestion
+      tags: [questions]
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+
+  /questions/{id}:
+    patch:
+      operationId: updateQuestion
+      tags: [questions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+    delete:
+      operationId: deleteQuestion
+      tags: [questions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── SUBMISSIONS ─────────────────────────────────────────────────────────────
+  /attempts/{attemptId}/submit:
+    post:
+      operationId: submitAttempt
+      tags: [submissions]
+      summary: Submit quiz attempt answers
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionInput"
+      responses:
+        "200":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+
+  /attempts/{attemptId}/force-submit:
+    post:
+      operationId: forceSubmitAttempt
+      tags: [submissions]
+      summary: Force submit due to lockdown violation
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForceSubmitInput"
+      responses:
+        "200":
+          description: Force submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+
+  /attempts/{attemptId}/heartbeat:
+    post:
+      operationId: attemptHeartbeat
+      tags: [submissions]
+      summary: Heartbeat to keep exam session alive
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeartbeatInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatResponse"
+
+  /attempts/{attemptId}:
+    get:
+      operationId: getAttempt
+      tags: [submissions]
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attempt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+
+  # ─── GRADES ──────────────────────────────────────────────────────────────────
+  /attempts/{attemptId}/grade:
+    patch:
+      operationId: gradeAttempt
+      tags: [grades]
+      summary: Teacher manually grades attempt
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeInput"
+      responses:
+        "200":
+          description: Graded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+
+  /courses/{courseId}/grades:
+    get:
+      operationId: listCourseGrades
+      tags: [grades]
+      summary: List all grades for a course (for Excel export)
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Grades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeRow"
+
+  /courses/{courseId}/grades/export:
+    get:
+      operationId: exportGrades
+      tags: [grades]
+      summary: Export grades as data for Excel
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Export data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeExport"
+
+  # ─── ALERTS / PROCTORING ─────────────────────────────────────────────────────
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List alerts (teacher sees their course alerts)
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+    post:
+      operationId: createAlert
+      tags: [alerts]
+      summary: Create a proctoring alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}/resolve:
+    patch:
+      operationId: resolveAlert
+      tags: [alerts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertResolveInput"
+      responses:
+        "200":
+          description: Resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /attempts/{attemptId}/alerts:
+    get:
+      operationId: listAttemptAlerts
+      tags: [alerts]
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alerts for attempt
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  # ─── ANNOUNCEMENTS ────────────────────────────────────────────────────────────
+  /courses/{courseId}/announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [courses]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [courses]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{id}:
+    delete:
+      operationId: deleteAnnouncement
+      tags: [courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    # ─── AUTH ─────────────────────────────────────────────────────────────────
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+
+    # ─── USER ─────────────────────────────────────────────────────────────────
+    User:
+      type: object
+      required: [id, name, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [student, teacher, admin]
+        studentId:
+          type: ["string", "null"]
+        department:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [student, teacher, admin]
+        studentId:
+          type: string
+        department:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [student, teacher, admin]
+        studentId:
+          type: string
+        department:
+          type: string
+        avatarUrl:
+          type: string
+
+    # ─── COURSE ───────────────────────────────────────────────────────────────
+    Course:
+      type: object
+      required: [id, title, code, teacherId, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        code:
+          type: string
+        description:
+          type: ["string", "null"]
+        teacherId:
+          type: integer
+        teacherName:
+          type: ["string", "null"]
+        semester:
+          type: ["string", "null"]
+        academicYear:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        enrollmentCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseInput:
+      type: object
+      required: [title, code, teacherId]
+      properties:
+        title:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        teacherId:
+          type: integer
+        semester:
+          type: string
+        academicYear:
+          type: string
+
+    CourseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        teacherId:
+          type: integer
+        semester:
+          type: string
+        academicYear:
+          type: string
+        isActive:
+          type: boolean
+
+    CourseDashboard:
+      type: object
+      required: [courseId, enrolledStudents, totalQuizzes, totalFiles, pendingGrades, recentAlerts]
+      properties:
+        courseId:
+          type: integer
+        enrolledStudents:
+          type: integer
+        totalQuizzes:
+          type: integer
+        totalFiles:
+          type: integer
+        pendingGrades:
+          type: integer
+        recentAlerts:
+          type: integer
+
+    # ─── ENROLLMENT ───────────────────────────────────────────────────────────
+    Enrollment:
+      type: object
+      required: [id, courseId, studentId, enrolledAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: ["string", "null"]
+        studentEmail:
+          type: ["string", "null"]
+        enrolledAt:
+          type: string
+          format: date-time
+
+    EnrollmentInput:
+      type: object
+      required: [courseId, studentId]
+      properties:
+        courseId:
+          type: integer
+        studentId:
+          type: integer
+
+    # ─── MODULE ───────────────────────────────────────────────────────────────
+    Module:
+      type: object
+      required: [id, courseId, title, position, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        position:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ModuleInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        position:
+          type: integer
+
+    ModuleUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        position:
+          type: integer
+
+    # ─── FILE ─────────────────────────────────────────────────────────────────
+    CourseFile:
+      type: object
+      required: [id, moduleId, fileName, fileType, uploadedBy, createdAt]
+      properties:
+        id:
+          type: integer
+        moduleId:
+          type: integer
+        fileName:
+          type: string
+        originalName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: ["integer", "null"]
+        url:
+          type: string
+        uploadedBy:
+          type: integer
+        uploaderName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    FileInput:
+      type: object
+      required: [moduleId, fileName, fileType, url, uploadedBy]
+      properties:
+        moduleId:
+          type: integer
+        fileName:
+          type: string
+        originalName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: integer
+        url:
+          type: string
+        uploadedBy:
+          type: integer
+
+    # ─── QUIZ ─────────────────────────────────────────────────────────────────
+    Quiz:
+      type: object
+      required: [id, courseId, title, quizType, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        quizType:
+          type: string
+          enum: [quiz, exam]
+        isLockdown:
+          type: boolean
+        lockdownCamera:
+          type: boolean
+        lockdownMic:
+          type: boolean
+        durationMinutes:
+          type: ["integer", "null"]
+        startTime:
+          type: ["string", "null"]
+          format: date-time
+        endTime:
+          type: ["string", "null"]
+          format: date-time
+        maxAttempts:
+          type: integer
+        isPublished:
+          type: boolean
+        totalPoints:
+          type: ["integer", "null"]
+        questionCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    QuizInput:
+      type: object
+      required: [title, quizType]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        quizType:
+          type: string
+          enum: [quiz, exam]
+        isLockdown:
+          type: boolean
+        lockdownCamera:
+          type: boolean
+        lockdownMic:
+          type: boolean
+        durationMinutes:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        maxAttempts:
+          type: integer
+
+    QuizUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        isLockdown:
+          type: boolean
+        lockdownCamera:
+          type: boolean
+        lockdownMic:
+          type: boolean
+        durationMinutes:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        maxAttempts:
+          type: integer
+        isPublished:
+          type: boolean
+
+    StartQuizInput:
+      type: object
+      required: [studentId]
+      properties:
+        studentId:
+          type: integer
+
+    QuizAttempt:
+      type: object
+      required: [id, quizId, studentId, status, startedAt]
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: ["string", "null"]
+        quizTitle:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [in_progress, submitted, force_submitted, graded]
+        score:
+          type: ["number", "null"]
+        maxScore:
+          type: ["number", "null"]
+        answers:
+          type: ["string", "null"]
+        feedback:
+          type: ["string", "null"]
+        startedAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: ["string", "null"]
+          format: date-time
+        lateEntry:
+          type: boolean
+        lateMinutes:
+          type: ["integer", "null"]
+
+    # ─── QUESTION ─────────────────────────────────────────────────────────────
+    Question:
+      type: object
+      required: [id, quizId, questionText, questionType, points, position]
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        questionText:
+          type: string
+        questionType:
+          type: string
+          enum: [multiple_choice, true_false, short_answer, essay, file_upload]
+        points:
+          type: integer
+        position:
+          type: integer
+        options:
+          type: ["string", "null"]
+        correctAnswer:
+          type: ["string", "null"]
+        explanation:
+          type: ["string", "null"]
+
+    QuestionInput:
+      type: object
+      required: [questionText, questionType, points, position]
+      properties:
+        questionText:
+          type: string
+        questionType:
+          type: string
+          enum: [multiple_choice, true_false, short_answer, essay, file_upload]
+        points:
+          type: integer
+        position:
+          type: integer
+        options:
+          type: string
+        correctAnswer:
+          type: string
+        explanation:
+          type: string
+
+    QuestionUpdate:
+      type: object
+      properties:
+        questionText:
+          type: string
+        questionType:
+          type: string
+          enum: [multiple_choice, true_false, short_answer, essay, file_upload]
+        points:
+          type: integer
+        position:
+          type: integer
+        options:
+          type: string
+        correctAnswer:
+          type: string
+        explanation:
+          type: string
+
+    # ─── SUBMISSION ───────────────────────────────────────────────────────────
+    SubmissionInput:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: string
+          description: JSON string mapping questionId to answer
+
+    ForceSubmitInput:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [tab_switch, timeout, violation]
+
+    HeartbeatInput:
+      type: object
+      required: [attemptId]
+      properties:
+        attemptId:
+          type: integer
+        noiseDetected:
+          type: boolean
+        movementDetected:
+          type: boolean
+
+    HeartbeatResponse:
+      type: object
+      required: [ok, remainingSeconds]
+      properties:
+        ok:
+          type: boolean
+        remainingSeconds:
+          type: ["integer", "null"]
+
+    # ─── GRADE ────────────────────────────────────────────────────────────────
+    GradeInput:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: number
+        feedback:
+          type: string
+
+    GradeRow:
+      type: object
+      required: [studentId, studentName, studentEmail, quizTitle, score, maxScore, status, submittedAt]
+      properties:
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        studentEmail:
+          type: string
+        quizTitle:
+          type: string
+        score:
+          type: ["number", "null"]
+        maxScore:
+          type: ["number", "null"]
+        status:
+          type: string
+        submittedAt:
+          type: ["string", "null"]
+
+    GradeExport:
+      type: object
+      required: [courseName, rows]
+      properties:
+        courseName:
+          type: string
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/GradeRow"
+
+    # ─── ALERT ────────────────────────────────────────────────────────────────
+    Alert:
+      type: object
+      required: [id, attemptId, alertType, message, createdAt]
+      properties:
+        id:
+          type: integer
+        attemptId:
+          type: integer
+        studentId:
+          type: ["integer", "null"]
+        studentName:
+          type: ["string", "null"]
+        quizTitle:
+          type: ["string", "null"]
+        alertType:
+          type: string
+          enum: [late_entry, tab_switch, noise_detected, movement_detected, force_submitted, violation]
+        message:
+          type: string
+        resolved:
+          type: boolean
+        resolvedNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AlertInput:
+      type: object
+      required: [attemptId, alertType, message]
+      properties:
+        attemptId:
+          type: integer
+        alertType:
+          type: string
+          enum: [late_entry, tab_switch, noise_detected, movement_detected, force_submitted, violation]
+        message:
+          type: string
+
+    AlertResolveInput:
+      type: object
+      properties:
+        resolvedNote:
+          type: string
+
+    # ─── ANNOUNCEMENT ─────────────────────────────────────────────────────────
+    Announcement:
+      type: object
+      required: [id, courseId, title, content, authorId, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        authorId:
+          type: integer
+        authorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AnnouncementInput:
+      type: object
+      required: [title, content, authorId]
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        authorId:
+          type: integer
