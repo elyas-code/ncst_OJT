@@ -11,6 +11,7 @@ import submissionsRouter from "./submissions";
 import gradesRouter from "./grades";
 import alertsRouter from "./alerts";
 import announcementsRouter from "./announcements";
+import fileSubmissionsRouter from "./file-submissions";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(submissionsRouter);
 router.use(gradesRouter);
 router.use(alertsRouter);
 router.use(announcementsRouter);
+router.use(fileSubmissionsRouter);
 
 export default router;

@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useLogout } from "@workspace/api-client-react";
-import { BookOpen, Home, Settings, Users, LogOut, FileText, Bell } from "lucide-react";
+import { BookOpen, Home, Settings, Users, LogOut, FileText, Bell, Upload } from "lucide-react";
 import { Button } from "./ui/button";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -23,8 +23,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   const navItems = [
-    { label: "Dashboard", href: "/", icon: Home, roles: ["student", "teacher", "admin"] },
+    { label: "Dashboard", href: "/dashboard", icon: Home, roles: ["student", "teacher", "admin"] },
     { label: "Courses", href: "/courses", icon: BookOpen, roles: ["student", "teacher", "admin"] },
+    { label: "Submissions", href: "/submissions", icon: Upload, roles: ["student", "teacher", "admin"] },
     { label: "Admin Panel", href: "/admin", icon: Users, roles: ["admin"] },
     { label: "Settings", href: "/settings", icon: Settings, roles: ["student", "teacher", "admin"] },
   ];

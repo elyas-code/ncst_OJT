@@ -19,6 +19,7 @@ tags:
   - name: alerts
   - name: enrollments
   - name: users
+  - name: file-submissions
 
 paths:
   /healthz:
@@ -963,6 +964,118 @@ paths:
         "204":
           description: Deleted
 
+  # ─── FILE SUBMISSIONS ────────────────────────────────────────────────────────
+  /file-submissions:
+    get:
+      operationId: listFileSubmissions
+      tags: [file-submissions]
+      summary: List file submissions (own for students, all for teachers/admins)
+      parameters:
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected, revision_requested]
+      responses:
+        "200":
+          description: List of file submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FileSubmission"
+    post:
+      operationId: createFileSubmission
+      tags: [file-submissions]
+      summary: Submit a file (students only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileSubmissionInput"
+      responses:
+        "201":
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSubmission"
+
+  /file-submissions/{id}:
+    get:
+      operationId: getFileSubmission
+      tags: [file-submissions]
+      summary: Get a single file submission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: File submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSubmission"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateFileSubmission
+      tags: [file-submissions]
+      summary: Update a pending submission (student only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileSubmissionUpdate"
+      responses:
+        "200":
+          description: Updated submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSubmission"
+
+  /file-submissions/{id}/review:
+    post:
+      operationId: reviewFileSubmission
+      tags: [file-submissions]
+      summary: Approve, reject, or request revision (teacher/admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileSubmissionReviewInput"
+      responses:
+        "200":
+          description: Reviewed submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSubmission"
+
 components:
   schemas:
     HealthStatus:
@@ -1602,3 +1715,98 @@ components:
           type: string
         authorId:
           type: integer
+
+    # ─── FILE SUBMISSION ──────────────────────────────────────────────────────
+    FileSubmission:
+      type: object
+      required: [id, studentId, courseId, title, fileUrl, fileName, status, submittedAt]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: ["string", "null"]
+        studentEmail:
+          type: ["string", "null"]
+        courseId:
+          type: integer
+        courseTitle:
+          type: ["string", "null"]
+        courseCode:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        fileUrl:
+          type: string
+        fileName:
+          type: string
+        fileType:
+          type: ["string", "null"]
+        fileSize:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected, revision_requested]
+        reviewerId:
+          type: ["integer", "null"]
+        reviewerName:
+          type: ["string", "null"]
+        reviewComment:
+          type: ["string", "null"]
+        submittedAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: ["string", "null"]
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    FileSubmissionInput:
+      type: object
+      required: [courseId, title, fileUrl, fileName]
+      properties:
+        courseId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        fileUrl:
+          type: string
+        fileName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: integer
+
+    FileSubmissionUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        fileUrl:
+          type: string
+        fileName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: integer
+
+    FileSubmissionReviewInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected, revision_requested]
+        reviewComment:
+          type: string

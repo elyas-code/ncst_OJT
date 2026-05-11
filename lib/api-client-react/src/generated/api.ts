@@ -31,6 +31,10 @@ import type {
   Enrollment,
   EnrollmentInput,
   FileInput,
+  FileSubmission,
+  FileSubmissionInput,
+  FileSubmissionReviewInput,
+  FileSubmissionUpdate,
   ForceSubmitInput,
   GradeExport,
   GradeInput,
@@ -38,6 +42,7 @@ import type {
   HealthStatus,
   HeartbeatInput,
   HeartbeatResponse,
+  ListFileSubmissionsParams,
   LoginInput,
   Module,
   ModuleInput,
@@ -4073,4 +4078,452 @@ export const useDeleteAnnouncement = <
   TContext
 > => {
   return useMutation(getDeleteAnnouncementMutationOptions(options));
+};
+
+/**
+ * @summary List file submissions (own for students, all for teachers/admins)
+ */
+export const getListFileSubmissionsUrl = (
+  params?: ListFileSubmissionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/file-submissions?${stringifiedParams}`
+    : `/api/file-submissions`;
+};
+
+export const listFileSubmissions = async (
+  params?: ListFileSubmissionsParams,
+  options?: RequestInit,
+): Promise<FileSubmission[]> => {
+  return customFetch<FileSubmission[]>(getListFileSubmissionsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListFileSubmissionsQueryKey = (
+  params?: ListFileSubmissionsParams,
+) => {
+  return [`/api/file-submissions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListFileSubmissionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listFileSubmissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListFileSubmissionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listFileSubmissions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListFileSubmissionsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listFileSubmissions>>
+  > = ({ signal }) =>
+    listFileSubmissions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listFileSubmissions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListFileSubmissionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listFileSubmissions>>
+>;
+export type ListFileSubmissionsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List file submissions (own for students, all for teachers/admins)
+ */
+
+export function useListFileSubmissions<
+  TData = Awaited<ReturnType<typeof listFileSubmissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListFileSubmissionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listFileSubmissions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListFileSubmissionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit a file (students only)
+ */
+export const getCreateFileSubmissionUrl = () => {
+  return `/api/file-submissions`;
+};
+
+export const createFileSubmission = async (
+  fileSubmissionInput: FileSubmissionInput,
+  options?: RequestInit,
+): Promise<FileSubmission> => {
+  return customFetch<FileSubmission>(getCreateFileSubmissionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(fileSubmissionInput),
+  });
+};
+
+export const getCreateFileSubmissionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createFileSubmission>>,
+    TError,
+    { data: BodyType<FileSubmissionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createFileSubmission>>,
+  TError,
+  { data: BodyType<FileSubmissionInput> },
+  TContext
+> => {
+  const mutationKey = ["createFileSubmission"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createFileSubmission>>,
+    { data: BodyType<FileSubmissionInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createFileSubmission(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateFileSubmissionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createFileSubmission>>
+>;
+export type CreateFileSubmissionMutationBody = BodyType<FileSubmissionInput>;
+export type CreateFileSubmissionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit a file (students only)
+ */
+export const useCreateFileSubmission = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createFileSubmission>>,
+    TError,
+    { data: BodyType<FileSubmissionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createFileSubmission>>,
+  TError,
+  { data: BodyType<FileSubmissionInput> },
+  TContext
+> => {
+  return useMutation(getCreateFileSubmissionMutationOptions(options));
+};
+
+/**
+ * @summary Get a single file submission
+ */
+export const getGetFileSubmissionUrl = (id: number) => {
+  return `/api/file-submissions/${id}`;
+};
+
+export const getFileSubmission = async (
+  id: number,
+  options?: RequestInit,
+): Promise<FileSubmission> => {
+  return customFetch<FileSubmission>(getGetFileSubmissionUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetFileSubmissionQueryKey = (id: number) => {
+  return [`/api/file-submissions/${id}`] as const;
+};
+
+export const getGetFileSubmissionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getFileSubmission>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getFileSubmission>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetFileSubmissionQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getFileSubmission>>
+  > = ({ signal }) => getFileSubmission(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getFileSubmission>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetFileSubmissionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getFileSubmission>>
+>;
+export type GetFileSubmissionQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a single file submission
+ */
+
+export function useGetFileSubmission<
+  TData = Awaited<ReturnType<typeof getFileSubmission>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getFileSubmission>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetFileSubmissionQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a pending submission (student only)
+ */
+export const getUpdateFileSubmissionUrl = (id: number) => {
+  return `/api/file-submissions/${id}`;
+};
+
+export const updateFileSubmission = async (
+  id: number,
+  fileSubmissionUpdate: FileSubmissionUpdate,
+  options?: RequestInit,
+): Promise<FileSubmission> => {
+  return customFetch<FileSubmission>(getUpdateFileSubmissionUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(fileSubmissionUpdate),
+  });
+};
+
+export const getUpdateFileSubmissionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateFileSubmission>>,
+    TError,
+    { id: number; data: BodyType<FileSubmissionUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateFileSubmission>>,
+  TError,
+  { id: number; data: BodyType<FileSubmissionUpdate> },
+  TContext
+> => {
+  const mutationKey = ["updateFileSubmission"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateFileSubmission>>,
+    { id: number; data: BodyType<FileSubmissionUpdate> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateFileSubmission(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateFileSubmissionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateFileSubmission>>
+>;
+export type UpdateFileSubmissionMutationBody = BodyType<FileSubmissionUpdate>;
+export type UpdateFileSubmissionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a pending submission (student only)
+ */
+export const useUpdateFileSubmission = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateFileSubmission>>,
+    TError,
+    { id: number; data: BodyType<FileSubmissionUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateFileSubmission>>,
+  TError,
+  { id: number; data: BodyType<FileSubmissionUpdate> },
+  TContext
+> => {
+  return useMutation(getUpdateFileSubmissionMutationOptions(options));
+};
+
+/**
+ * @summary Approve, reject, or request revision (teacher/admin only)
+ */
+export const getReviewFileSubmissionUrl = (id: number) => {
+  return `/api/file-submissions/${id}/review`;
+};
+
+export const reviewFileSubmission = async (
+  id: number,
+  fileSubmissionReviewInput: FileSubmissionReviewInput,
+  options?: RequestInit,
+): Promise<FileSubmission> => {
+  return customFetch<FileSubmission>(getReviewFileSubmissionUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(fileSubmissionReviewInput),
+  });
+};
+
+export const getReviewFileSubmissionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reviewFileSubmission>>,
+    TError,
+    { id: number; data: BodyType<FileSubmissionReviewInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reviewFileSubmission>>,
+  TError,
+  { id: number; data: BodyType<FileSubmissionReviewInput> },
+  TContext
+> => {
+  const mutationKey = ["reviewFileSubmission"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reviewFileSubmission>>,
+    { id: number; data: BodyType<FileSubmissionReviewInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return reviewFileSubmission(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReviewFileSubmissionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reviewFileSubmission>>
+>;
+export type ReviewFileSubmissionMutationBody =
+  BodyType<FileSubmissionReviewInput>;
+export type ReviewFileSubmissionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Approve, reject, or request revision (teacher/admin only)
+ */
+export const useReviewFileSubmission = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reviewFileSubmission>>,
+    TError,
+    { id: number; data: BodyType<FileSubmissionReviewInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof reviewFileSubmission>>,
+  TError,
+  { id: number; data: BodyType<FileSubmissionReviewInput> },
+  TContext
+> => {
+  return useMutation(getReviewFileSubmissionMutationOptions(options));
 };

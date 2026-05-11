@@ -42,8 +42,9 @@ A full-featured Learning Management System for the Nasser Centre for Science & T
 
 ## Product
 
-- **Students**: Browse courses, access module files, take lockdown quizzes/exams with tab-switch protection
-- **Teachers**: Upload files, build quizzes (Google Forms-style with multiple-choice, T/F, essay, etc.), grade submissions, view grade book with CSV export, proctor live exams with alert monitoring
+- **Public**: Landing page at `/` visible without login — NCST branding, feature overview, sign-in CTA
+- **Students**: Browse courses, access module files, take lockdown quizzes/exams with tab-switch protection, submit and track OJT/assignment files with status badges
+- **Teachers / Reviewers**: Upload files, build quizzes (Google Forms-style with multiple-choice, T/F, essay, etc.), grade submissions, view grade book with CSV export, proctor live exams with alert monitoring, review student file submissions (approve / reject / request revision with comments)
 - **Admins**: Full user/course CRUD, enroll students in courses, view and resolve integrity alerts
 
 ## Login credentials (seed data)

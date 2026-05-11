@@ -479,3 +479,95 @@ export interface AnnouncementInput {
   content: string;
   authorId: number;
 }
+
+export type FileSubmissionStatus =
+  (typeof FileSubmissionStatus)[keyof typeof FileSubmissionStatus];
+
+export const FileSubmissionStatus = {
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+  revision_requested: "revision_requested",
+} as const;
+
+export interface FileSubmission {
+  id: number;
+  studentId: number;
+  /** @nullable */
+  studentName?: string | null;
+  /** @nullable */
+  studentEmail?: string | null;
+  courseId: number;
+  /** @nullable */
+  courseTitle?: string | null;
+  /** @nullable */
+  courseCode?: string | null;
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  fileUrl: string;
+  fileName: string;
+  /** @nullable */
+  fileType?: string | null;
+  /** @nullable */
+  fileSize?: number | null;
+  status: FileSubmissionStatus;
+  /** @nullable */
+  reviewerId?: number | null;
+  /** @nullable */
+  reviewerName?: string | null;
+  /** @nullable */
+  reviewComment?: string | null;
+  submittedAt: string;
+  /** @nullable */
+  reviewedAt?: string | null;
+  updatedAt?: string;
+}
+
+export interface FileSubmissionInput {
+  courseId: number;
+  title: string;
+  description?: string;
+  fileUrl: string;
+  fileName: string;
+  fileType?: string;
+  fileSize?: number;
+}
+
+export interface FileSubmissionUpdate {
+  title?: string;
+  description?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+}
+
+export type FileSubmissionReviewInputStatus =
+  (typeof FileSubmissionReviewInputStatus)[keyof typeof FileSubmissionReviewInputStatus];
+
+export const FileSubmissionReviewInputStatus = {
+  approved: "approved",
+  rejected: "rejected",
+  revision_requested: "revision_requested",
+} as const;
+
+export interface FileSubmissionReviewInput {
+  status: FileSubmissionReviewInputStatus;
+  reviewComment?: string;
+}
+
+export type ListFileSubmissionsParams = {
+  courseId?: number;
+  status?: ListFileSubmissionsStatus;
+};
+
+export type ListFileSubmissionsStatus =
+  (typeof ListFileSubmissionsStatus)[keyof typeof ListFileSubmissionsStatus];
+
+export const ListFileSubmissionsStatus = {
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+  revision_requested: "revision_requested",
+} as const;

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Layout } from "./components/layout";
 import Login from "./pages/login";
+import Landing from "./pages/landing";
 import Dashboard from "./pages/dashboard";
 import Courses from "./pages/courses";
 import Settings from "./pages/settings";
@@ -18,6 +19,7 @@ const QuizResults = lazy(() => import("./pages/quiz-results"));
 const Grades = lazy(() => import("./pages/grades"));
 const Proctor = lazy(() => import("./pages/proctor"));
 const Admin = lazy(() => import("./pages/admin"));
+const Submissions = lazy(() => import("./pages/submissions"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +29,17 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function PublicHome() {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  React.useEffect(() => {
+    if (!isLoading && user) setLocation("/dashboard");
+  }, [user, isLoading, setLocation]);
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (user) return null;
+  return <Landing />;
+}
 
 function ProtectedRoute({ component: Component, roles, ...rest }: { component: React.ComponentType<any>; roles?: string[] }) {
   const { user, isLoading } = useAuth();
@@ -71,9 +84,11 @@ function ProtectedRoute({ component: Component, roles, ...rest }: { component: R
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={PublicHome} />
       <Route path="/login" component={Login} />
-      <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/courses" component={() => <ProtectedRoute component={Courses} />} />
+      <Route path="/submissions" component={() => <ProtectedRoute component={Submissions} />} />
       <Route path="/courses/:courseId/quiz-builder" component={() => <ProtectedRoute component={QuizBuilder} roles={["teacher", "admin"]} />} />
       <Route path="/courses/:courseId/grades" component={() => <ProtectedRoute component={Grades} roles={["teacher", "admin"]} />} />
       <Route path="/courses/:courseId/proctor" component={() => <ProtectedRoute component={Proctor} roles={["teacher", "admin"]} />} />

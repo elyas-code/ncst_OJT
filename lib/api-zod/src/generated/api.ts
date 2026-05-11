@@ -854,3 +854,156 @@ export const CreateAnnouncementBody = zod.object({
 export const DeleteAnnouncementParams = zod.object({
   id: zod.coerce.number(),
 });
+
+/**
+ * @summary List file submissions (own for students, all for teachers/admins)
+ */
+export const ListFileSubmissionsQueryParams = zod.object({
+  courseId: zod.coerce.number().optional(),
+  status: zod
+    .enum(["pending", "approved", "rejected", "revision_requested"])
+    .optional(),
+});
+
+export const ListFileSubmissionsResponseItem = zod.object({
+  id: zod.number(),
+  studentId: zod.number(),
+  studentName: zod.string().nullish(),
+  studentEmail: zod.string().nullish(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  fileUrl: zod.string(),
+  fileName: zod.string(),
+  fileType: zod.string().nullish(),
+  fileSize: zod.number().nullish(),
+  status: zod.enum(["pending", "approved", "rejected", "revision_requested"]),
+  reviewerId: zod.number().nullish(),
+  reviewerName: zod.string().nullish(),
+  reviewComment: zod.string().nullish(),
+  submittedAt: zod.coerce.date(),
+  reviewedAt: zod.coerce.date().nullish(),
+  updatedAt: zod.coerce.date().optional(),
+});
+export const ListFileSubmissionsResponse = zod.array(
+  ListFileSubmissionsResponseItem,
+);
+
+/**
+ * @summary Submit a file (students only)
+ */
+export const CreateFileSubmissionBody = zod.object({
+  courseId: zod.number(),
+  title: zod.string(),
+  description: zod.string().optional(),
+  fileUrl: zod.string(),
+  fileName: zod.string(),
+  fileType: zod.string().optional(),
+  fileSize: zod.number().optional(),
+});
+
+/**
+ * @summary Get a single file submission
+ */
+export const GetFileSubmissionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetFileSubmissionResponse = zod.object({
+  id: zod.number(),
+  studentId: zod.number(),
+  studentName: zod.string().nullish(),
+  studentEmail: zod.string().nullish(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  fileUrl: zod.string(),
+  fileName: zod.string(),
+  fileType: zod.string().nullish(),
+  fileSize: zod.number().nullish(),
+  status: zod.enum(["pending", "approved", "rejected", "revision_requested"]),
+  reviewerId: zod.number().nullish(),
+  reviewerName: zod.string().nullish(),
+  reviewComment: zod.string().nullish(),
+  submittedAt: zod.coerce.date(),
+  reviewedAt: zod.coerce.date().nullish(),
+  updatedAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Update a pending submission (student only)
+ */
+export const UpdateFileSubmissionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateFileSubmissionBody = zod.object({
+  title: zod.string().optional(),
+  description: zod.string().optional(),
+  fileUrl: zod.string().optional(),
+  fileName: zod.string().optional(),
+  fileType: zod.string().optional(),
+  fileSize: zod.number().optional(),
+});
+
+export const UpdateFileSubmissionResponse = zod.object({
+  id: zod.number(),
+  studentId: zod.number(),
+  studentName: zod.string().nullish(),
+  studentEmail: zod.string().nullish(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  fileUrl: zod.string(),
+  fileName: zod.string(),
+  fileType: zod.string().nullish(),
+  fileSize: zod.number().nullish(),
+  status: zod.enum(["pending", "approved", "rejected", "revision_requested"]),
+  reviewerId: zod.number().nullish(),
+  reviewerName: zod.string().nullish(),
+  reviewComment: zod.string().nullish(),
+  submittedAt: zod.coerce.date(),
+  reviewedAt: zod.coerce.date().nullish(),
+  updatedAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Approve, reject, or request revision (teacher/admin only)
+ */
+export const ReviewFileSubmissionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ReviewFileSubmissionBody = zod.object({
+  status: zod.enum(["approved", "rejected", "revision_requested"]),
+  reviewComment: zod.string().optional(),
+});
+
+export const ReviewFileSubmissionResponse = zod.object({
+  id: zod.number(),
+  studentId: zod.number(),
+  studentName: zod.string().nullish(),
+  studentEmail: zod.string().nullish(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  fileUrl: zod.string(),
+  fileName: zod.string(),
+  fileType: zod.string().nullish(),
+  fileSize: zod.number().nullish(),
+  status: zod.enum(["pending", "approved", "rejected", "revision_requested"]),
+  reviewerId: zod.number().nullish(),
+  reviewerName: zod.string().nullish(),
+  reviewComment: zod.string().nullish(),
+  submittedAt: zod.coerce.date(),
+  reviewedAt: zod.coerce.date().nullish(),
+  updatedAt: zod.coerce.date().optional(),
+});
