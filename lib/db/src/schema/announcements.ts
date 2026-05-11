@@ -10,6 +10,10 @@ export const announcementsTable = pgTable("announcements", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   authorId: integer("author_id").notNull().references(() => usersTable.id),
+  attachmentUrl: text("attachment_url"),
+  attachmentName: text("attachment_name"),
+  attachmentType: text("attachment_type"),
+  attachmentSize: integer("attachment_size"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

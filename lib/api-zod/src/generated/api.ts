@@ -875,6 +875,10 @@ export const ListAnnouncementsResponseItem = zod.object({
   content: zod.string(),
   authorId: zod.number(),
   authorName: zod.string().nullish(),
+  attachmentUrl: zod.string().nullish(),
+  attachmentName: zod.string().nullish(),
+  attachmentType: zod.string().nullish(),
+  attachmentSize: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const ListAnnouncementsResponse = zod.array(
@@ -889,6 +893,10 @@ export const CreateAnnouncementBody = zod.object({
   title: zod.string(),
   content: zod.string(),
   authorId: zod.number(),
+  attachmentUrl: zod.string().nullish(),
+  attachmentName: zod.string().nullish(),
+  attachmentType: zod.string().nullish(),
+  attachmentSize: zod.number().nullish(),
 });
 
 export const DeleteAnnouncementParams = zod.object({

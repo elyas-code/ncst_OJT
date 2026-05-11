@@ -471,6 +471,14 @@ export interface Announcement {
   authorId: number;
   /** @nullable */
   authorName?: string | null;
+  /** @nullable */
+  attachmentUrl?: string | null;
+  /** @nullable */
+  attachmentName?: string | null;
+  /** @nullable */
+  attachmentType?: string | null;
+  /** @nullable */
+  attachmentSize?: number | null;
   createdAt: string;
 }
 
@@ -478,6 +486,14 @@ export interface AnnouncementInput {
   title: string;
   content: string;
   authorId: number;
+  /** @nullable */
+  attachmentUrl?: string | null;
+  /** @nullable */
+  attachmentName?: string | null;
+  /** @nullable */
+  attachmentType?: string | null;
+  /** @nullable */
+  attachmentSize?: number | null;
 }
 
 export type FileSubmissionStatus =

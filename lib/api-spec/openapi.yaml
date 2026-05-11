@@ -1870,6 +1870,14 @@ components:
           type: integer
         authorName:
           type: ["string", "null"]
+        attachmentUrl:
+          type: ["string", "null"]
+        attachmentName:
+          type: ["string", "null"]
+        attachmentType:
+          type: ["string", "null"]
+        attachmentSize:
+          type: ["integer", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1884,6 +1892,14 @@ components:
           type: string
         authorId:
           type: integer
+        attachmentUrl:
+          type: ["string", "null"]
+        attachmentName:
+          type: ["string", "null"]
+        attachmentType:
+          type: ["string", "null"]
+        attachmentSize:
+          type: ["integer", "null"]
 
     # ─── FILE SUBMISSION ──────────────────────────────────────────────────────
     FileSubmission:

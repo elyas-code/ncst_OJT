@@ -64,6 +64,18 @@ export default function AssignmentDetail() {
               <p className="text-sm whitespace-pre-wrap leading-relaxed">{a.instructions}</p>
             </div>
           )}
+          {a.attachmentUrl && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Reference file</p>
+              <a href={a.attachmentUrl} download={a.attachmentName} target="_blank" rel="noopener noreferrer" className="inline-block">
+                <Button size="sm" variant="outline">
+                  <FileText className="h-4 w-4 mr-2" />{a.attachmentName}
+                  {a.attachmentSize ? <span className="ml-2 text-xs text-muted-foreground">({((a.attachmentSize/1024)|0)} KB)</span> : null}
+                  <ExternalLink className="h-3 w-3 ml-2" />
+                </Button>
+              </a>
+            </div>
+          )}
           <div className="flex gap-3 text-xs text-muted-foreground">
             {a.allowText && <Badge variant="secondary">Text submission</Badge>}
             {a.allowFile && <Badge variant="secondary">File submission</Badge>}

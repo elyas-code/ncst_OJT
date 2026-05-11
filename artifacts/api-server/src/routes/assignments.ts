@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, assignmentsTable, assignmentSubmissionsTable, usersTable, coursesTable, enrollmentsTable } from "@workspace/db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireAuth, courseAccess, isStaff, getRole, getAssignmentCourseId, getSubmissionContext } from "../lib/authz.js";
+import { validateAttachmentUrl, sanitizeSize } from "../lib/attachments.js";
 
 const router: IRouter = Router();
 
@@ -34,8 +35,11 @@ router.post("/courses/:courseId/assignments", async (req, res): Promise<void> =>
   if (!Number.isFinite(courseId)) { res.status(400).json({ error: "Invalid course id" }); return; }
   const lvl = await courseAccess(userId, courseId);
   if (!isStaff(lvl)) { res.status(403).json({ error: "Only teachers and admins can create assignments" }); return; }
-  const { title, description, instructions, dueAt, points, allowFile, allowText, isPublished } = req.body ?? {};
+  const { title, description, instructions, dueAt, points, allowFile, allowText, isPublished,
+          attachmentUrl, attachmentName, attachmentType, attachmentSize } = req.body ?? {};
   if (!title) { res.status(400).json({ error: "Title required" }); return; }
+  const av = validateAttachmentUrl(attachmentUrl);
+  if (!av.ok) { res.status(400).json({ error: av.error }); return; }
   const [a] = await db.insert(assignmentsTable).values({
     courseId, title,
     description: description ?? null,
@@ -45,6 +49,10 @@ router.post("/courses/:courseId/assignments", async (req, res): Promise<void> =>
     allowFile: allowFile ?? true,
     allowText: allowText ?? true,
     isPublished: isPublished ?? true,
+    attachmentUrl: attachmentUrl ?? null,
+    attachmentName: attachmentName ?? null,
+    attachmentType: attachmentType ?? null,
+    attachmentSize: sanitizeSize(attachmentSize),
     createdBy: userId,
   }).returning();
   res.status(201).json(a);
@@ -71,7 +79,8 @@ router.patch("/assignments/:id", async (req, res): Promise<void> => {
   if (!courseId) { res.status(404).json({ error: "Not found" }); return; }
   const lvl = await courseAccess(userId, courseId);
   if (!isStaff(lvl)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const { title, description, instructions, dueAt, points, allowFile, allowText, isPublished } = req.body ?? {};
+  const { title, description, instructions, dueAt, points, allowFile, allowText, isPublished,
+          attachmentUrl, attachmentName, attachmentType, attachmentSize } = req.body ?? {};
   const patch: any = {};
   if (title !== undefined) patch.title = title;
   if (description !== undefined) patch.description = description;
@@ -81,6 +90,14 @@ router.patch("/assignments/:id", async (req, res): Promise<void> => {
   if (allowFile !== undefined) patch.allowFile = allowFile;
   if (allowText !== undefined) patch.allowText = allowText;
   if (isPublished !== undefined) patch.isPublished = isPublished;
+  if (attachmentUrl !== undefined) {
+    const v = validateAttachmentUrl(attachmentUrl);
+    if (!v.ok) { res.status(400).json({ error: v.error }); return; }
+    patch.attachmentUrl = attachmentUrl;
+  }
+  if (attachmentName !== undefined) patch.attachmentName = attachmentName;
+  if (attachmentType !== undefined) patch.attachmentType = attachmentType;
+  if (attachmentSize !== undefined) patch.attachmentSize = sanitizeSize(attachmentSize);
   if (Object.keys(patch).length === 0) { res.status(400).json({ error: "No fields to update" }); return; }
   const [a] = await db.update(assignmentsTable).set(patch).where(eq(assignmentsTable.id, id)).returning();
   res.json(a);

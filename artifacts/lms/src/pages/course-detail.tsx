@@ -45,17 +45,34 @@ function AddAnnouncementDialog({ courseId }: { courseId: number }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [att, setAtt] = useState<{ url: string; name: string; type: string; size: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const createAnn = useCreateAnnouncement();
   const qc = useQueryClient();
 
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { setError(`File too large (${(f.size/1024/1024).toFixed(1)} MB). Max 8 MB.`); return; }
+    setError(null);
+    const ext = f.name.split(".").pop()?.toLowerCase() ?? "other";
+    const r = new FileReader();
+    r.onload = () => setAtt({ url: typeof r.result === "string" ? r.result : "", name: f.name, type: ext, size: f.size });
+    r.readAsDataURL(f);
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    createAnn.mutate({ courseId, data: { courseId, title, content, authorId: user!.id } } as any, {
+    createAnn.mutate({ courseId, data: {
+      courseId, title, content, authorId: user!.id,
+      attachmentUrl: att?.url ?? null, attachmentName: att?.name ?? null,
+      attachmentType: att?.type ?? null, attachmentSize: att?.size ?? null,
+    } } as any, {
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`/api/courses/${courseId}/announcements`] });
-        setOpen(false); setTitle(""); setContent("");
-      }
+        setOpen(false); setTitle(""); setContent(""); setAtt(null); setError(null);
+      },
+      onError: (err: any) => setError(err?.message ?? "Failed to post."),
     });
   }
 
@@ -69,6 +86,12 @@ function AddAnnouncementDialog({ courseId }: { courseId: number }) {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2"><Label>Title</Label><Input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Announcement title" /></div>
           <div className="space-y-2"><Label>Content</Label><Textarea required value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="Write your announcement..." /></div>
+          <div className="space-y-2">
+            <Label>Attach a file (optional, max 8 MB)</Label>
+            <Input type="file" onChange={onFile} />
+            {att && <p className="text-xs text-muted-foreground">Attached: {att.name} &bull; {formatBytes(att.size)}</p>}
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter><Button type="submit" disabled={createAnn.isPending}>{createAnn.isPending ? "Posting..." : "Post"}</Button></DialogFooter>
         </form>
       </DialogContent>
@@ -380,7 +403,16 @@ export default function CourseDetail() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent><p className="text-sm whitespace-pre-wrap">{ann.content}</p></CardContent>
+              <CardContent className="space-y-3">
+                <p className="text-sm whitespace-pre-wrap">{ann.content}</p>
+                {ann.attachmentUrl && (
+                  <a href={ann.attachmentUrl} download={ann.attachmentName} target="_blank" rel="noopener noreferrer" className="inline-block">
+                    <Button size="sm" variant="outline" className="h-7 text-xs">
+                      <FileText className="h-3 w-3 mr-1" />{ann.attachmentName} <ExternalLink className="h-3 w-3 ml-1.5" />
+                    </Button>
+                  </a>
+                )}
+              </CardContent>
             </Card>
           ))}
         </TabsContent>
@@ -489,11 +521,29 @@ function CourseAssignments({ courseId, canManage }: { courseId: number; canManag
   const [instructions, setInstructions] = React.useState("");
   const [points, setPoints] = React.useState(100);
   const [dueAt, setDueAt] = React.useState("");
+  const [att, setAtt] = React.useState<{ url: string; name: string; type: string; size: number } | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { setError(`File too large (${(f.size/1024/1024).toFixed(1)} MB). Max 8 MB.`); return; }
+    setError(null);
+    const ext = f.name.split(".").pop()?.toLowerCase() ?? "other";
+    const r = new FileReader();
+    r.onload = () => setAtt({ url: typeof r.result === "string" ? r.result : "", name: f.name, type: ext, size: f.size });
+    r.readAsDataURL(f);
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    createMut.mutate({ title, description, instructions, points, dueAt: dueAt ? new Date(dueAt).toISOString() : null }, {
-      onSuccess: () => { setOpen(false); setTitle(""); setDescription(""); setInstructions(""); setPoints(100); setDueAt(""); }
+    createMut.mutate({
+      title, description, instructions, points,
+      dueAt: dueAt ? new Date(dueAt).toISOString() : null,
+      attachmentUrl: att?.url ?? null, attachmentName: att?.name ?? null,
+      attachmentType: att?.type ?? null, attachmentSize: att?.size ?? null,
+    }, {
+      onSuccess: () => { setOpen(false); setTitle(""); setDescription(""); setInstructions(""); setPoints(100); setDueAt(""); setAtt(null); setError(null); },
+      onError: (err: any) => setError(err?.message ?? "Failed to create."),
     });
   }
 
@@ -514,6 +564,12 @@ function CourseAssignments({ courseId, canManage }: { courseId: number; canManag
                   <div className="space-y-1.5"><Label>Points</Label><Input type="number" min={0} value={points} onChange={e => setPoints(parseInt(e.target.value) || 0)} /></div>
                   <div className="space-y-1.5"><Label>Due date</Label><Input type="datetime-local" value={dueAt} onChange={e => setDueAt(e.target.value)} /></div>
                 </div>
+                <div className="space-y-1.5">
+                  <Label>Reference file (optional, max 8 MB) — brief, starter file, rubric, etc.</Label>
+                  <Input type="file" onChange={onFile} />
+                  {att && <p className="text-xs text-muted-foreground">Attached: {att.name} &bull; {formatBytes(att.size)}</p>}
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
                 <DialogFooter><Button type="submit" disabled={createMut.isPending}>{createMut.isPending ? "Creating..." : "Create"}</Button></DialogFooter>
               </form>
             </DialogContent>
