@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash2, Users, BookOpen, Bell, GraduationCap } from "lucide-react";
+import { Plus, Trash2, Users, BookOpen, Bell, GraduationCap, Sparkles } from "lucide-react";
+import BulkUserImport from "../components/bulk-user-import";
 
 const ROLE_COLORS: Record<string, string> = {
   admin: "bg-red-100 text-red-700",
@@ -129,6 +130,30 @@ function AddCourseDialog({ teachers }: { teachers: any[] }) {
   );
 }
 
+function BulkImportDialog({ onComplete }: { onComplete: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="gap-1.5">
+          <Sparkles className="h-3.5 w-3.5" /> AI Bulk Import
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Bulk Import Users
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto py-1">
+          <BulkUserImport onComplete={() => { setOpen(false); onComplete(); }} />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Admin() {
   const { data: users, isLoading: usersLoading } = useListUsers();
   const { data: courses, isLoading: coursesLoading } = useListCourses();
@@ -190,7 +215,10 @@ export default function Admin() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between py-4">
               <CardTitle className="text-base">All Users</CardTitle>
-              <AddUserDialog />
+              <div className="flex items-center gap-2">
+                <BulkImportDialog onComplete={() => qc.invalidateQueries()} />
+                <AddUserDialog />
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {usersLoading ? <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div> : (

@@ -23,6 +23,10 @@ import type {
   Announcement,
   AnnouncementInput,
   AuthResponse,
+  BulkCreateCourseInvitationsBody,
+  BulkCreateResult,
+  BulkCreateUsersBody,
+  BulkInviteResult,
   Course,
   CourseDashboard,
   CourseFile,
@@ -524,6 +528,92 @@ export const useCreateUser = <
   TContext
 > => {
   return useMutation(getCreateUserMutationOptions(options));
+};
+
+/**
+ * @summary Bulk create users (admin only)
+ */
+export const getBulkCreateUsersUrl = () => {
+  return `/api/users/bulk`;
+};
+
+export const bulkCreateUsers = async (
+  bulkCreateUsersBody: BulkCreateUsersBody,
+  options?: RequestInit,
+): Promise<BulkCreateResult> => {
+  return customFetch<BulkCreateResult>(getBulkCreateUsersUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bulkCreateUsersBody),
+  });
+};
+
+export const getBulkCreateUsersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreateUsers>>,
+    TError,
+    { data: BodyType<BulkCreateUsersBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bulkCreateUsers>>,
+  TError,
+  { data: BodyType<BulkCreateUsersBody> },
+  TContext
+> => {
+  const mutationKey = ["bulkCreateUsers"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bulkCreateUsers>>,
+    { data: BodyType<BulkCreateUsersBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return bulkCreateUsers(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BulkCreateUsersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof bulkCreateUsers>>
+>;
+export type BulkCreateUsersMutationBody = BodyType<BulkCreateUsersBody>;
+export type BulkCreateUsersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Bulk create users (admin only)
+ */
+export const useBulkCreateUsers = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreateUsers>>,
+    TError,
+    { data: BodyType<BulkCreateUsersBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof bulkCreateUsers>>,
+  TError,
+  { data: BodyType<BulkCreateUsersBody> },
+  TContext
+> => {
+  return useMutation(getBulkCreateUsersMutationOptions(options));
 };
 
 export const getGetUserUrl = (id: number) => {
@@ -4528,6 +4618,97 @@ export const useReviewFileSubmission = <
   TContext
 > => {
   return useMutation(getReviewFileSubmissionMutationOptions(options));
+};
+
+/**
+ * @summary Bulk invite students by email list (teacher/admin)
+ */
+export const getBulkCreateCourseInvitationsUrl = (courseId: number) => {
+  return `/api/courses/${courseId}/invitations/bulk`;
+};
+
+export const bulkCreateCourseInvitations = async (
+  courseId: number,
+  bulkCreateCourseInvitationsBody: BulkCreateCourseInvitationsBody,
+  options?: RequestInit,
+): Promise<BulkInviteResult> => {
+  return customFetch<BulkInviteResult>(
+    getBulkCreateCourseInvitationsUrl(courseId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(bulkCreateCourseInvitationsBody),
+    },
+  );
+};
+
+export const getBulkCreateCourseInvitationsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreateCourseInvitations>>,
+    TError,
+    { courseId: number; data: BodyType<BulkCreateCourseInvitationsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bulkCreateCourseInvitations>>,
+  TError,
+  { courseId: number; data: BodyType<BulkCreateCourseInvitationsBody> },
+  TContext
+> => {
+  const mutationKey = ["bulkCreateCourseInvitations"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bulkCreateCourseInvitations>>,
+    { courseId: number; data: BodyType<BulkCreateCourseInvitationsBody> }
+  > = (props) => {
+    const { courseId, data } = props ?? {};
+
+    return bulkCreateCourseInvitations(courseId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BulkCreateCourseInvitationsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof bulkCreateCourseInvitations>>
+>;
+export type BulkCreateCourseInvitationsMutationBody =
+  BodyType<BulkCreateCourseInvitationsBody>;
+export type BulkCreateCourseInvitationsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Bulk invite students by email list (teacher/admin)
+ */
+export const useBulkCreateCourseInvitations = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreateCourseInvitations>>,
+    TError,
+    { courseId: number; data: BodyType<BulkCreateCourseInvitationsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof bulkCreateCourseInvitations>>,
+  TError,
+  { courseId: number; data: BodyType<BulkCreateCourseInvitationsBody> },
+  TContext
+> => {
+  return useMutation(getBulkCreateCourseInvitationsMutationOptions(options));
 };
 
 /**

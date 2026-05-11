@@ -72,6 +72,38 @@ router.get("/invitations/:token", async (req, res): Promise<void> => {
   res.json(await enrich(inv));
 });
 
+// Bulk invite — teacher/admin only
+router.post("/courses/:courseId/invitations/bulk", async (req, res): Promise<void> => {
+  const user = await getSessionUser(req);
+  if (!user || user.role === "student") { res.status(403).json({ error: "Forbidden" }); return; }
+  const courseId = parseInt(Array.isArray(req.params.courseId) ? req.params.courseId[0] : req.params.courseId, 10);
+  const { emails } = req.body as { emails: string[] };
+  if (!Array.isArray(emails) || emails.length === 0) { res.status(400).json({ error: "emails array required" }); return; }
+
+  const results: Array<{ email: string; success: boolean; error?: string; token?: string }> = [];
+
+  for (const rawEmail of emails) {
+    const email = rawEmail.trim().toLowerCase();
+    if (!email) continue;
+    try {
+      // Skip if already pending
+      const [existing] = await db.select({ id: courseInvitationsTable.id }).from(courseInvitationsTable)
+        .where(and(eq(courseInvitationsTable.courseId, courseId), eq(courseInvitationsTable.email, email), eq(courseInvitationsTable.status, "pending")));
+      if (existing) { results.push({ email, success: false, error: "Already has a pending invitation" }); continue; }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await db.insert(courseInvitationsTable).values({ courseId, email, token, invitedBy: user.id, expiresAt });
+      results.push({ email, success: true, token });
+    } catch (err: any) {
+      results.push({ email, success: false, error: err?.message ?? "Unknown error" });
+    }
+  }
+
+  const succeeded = results.filter(r => r.success).length;
+  res.json({ succeeded, failed: results.length - succeeded, results });
+});
+
 // Accept invitation — student must be logged in
 router.post("/invitations/:token/accept", async (req, res): Promise<void> => {
   const user = await getSessionUser(req);

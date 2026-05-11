@@ -76,6 +76,46 @@ export const CreateUserBody = zod.object({
   department: zod.string().optional(),
 });
 
+/**
+ * @summary Bulk create users (admin only)
+ */
+export const BulkCreateUsersBody = zod.object({
+  users: zod.array(
+    zod.object({
+      name: zod.string(),
+      email: zod.string(),
+      password: zod.string(),
+      role: zod.enum(["student", "teacher", "admin"]),
+      studentId: zod.string().optional(),
+      department: zod.string().optional(),
+    }),
+  ),
+});
+
+export const BulkCreateUsersResponse = zod.object({
+  succeeded: zod.number(),
+  failed: zod.number(),
+  results: zod.array(
+    zod.object({
+      success: zod.boolean(),
+      email: zod.string(),
+      error: zod.string().optional(),
+      user: zod
+        .object({
+          id: zod.number(),
+          name: zod.string(),
+          email: zod.string(),
+          role: zod.enum(["student", "teacher", "admin"]),
+          studentId: zod.string().nullish(),
+          department: zod.string().nullish(),
+          avatarUrl: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+        })
+        .optional(),
+    }),
+  ),
+});
+
 export const GetUserParams = zod.object({
   id: zod.coerce.number(),
 });
@@ -1006,6 +1046,30 @@ export const ReviewFileSubmissionResponse = zod.object({
   submittedAt: zod.coerce.date(),
   reviewedAt: zod.coerce.date().nullish(),
   updatedAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Bulk invite students by email list (teacher/admin)
+ */
+export const BulkCreateCourseInvitationsParams = zod.object({
+  courseId: zod.coerce.number(),
+});
+
+export const BulkCreateCourseInvitationsBody = zod.object({
+  emails: zod.array(zod.string()),
+});
+
+export const BulkCreateCourseInvitationsResponse = zod.object({
+  succeeded: zod.number(),
+  failed: zod.number(),
+  results: zod.array(
+    zod.object({
+      success: zod.boolean(),
+      email: zod.string(),
+      token: zod.string().optional(),
+      error: zod.string().optional(),
+    }),
+  ),
 });
 
 /**

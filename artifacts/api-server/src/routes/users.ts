@@ -57,4 +57,38 @@ router.delete("/users/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
+// Bulk create users (admin only)
+router.post("/users/bulk", async (req, res): Promise<void> => {
+  const userId = (req.session as any)?.userId;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const [caller] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, userId));
+  if (!caller || caller.role !== "admin") { res.status(403).json({ error: "Admin only" }); return; }
+
+  const { users } = req.body as { users: Array<{ name: string; email: string; password: string; role: string; studentId?: string; department?: string }> };
+  if (!Array.isArray(users) || users.length === 0) { res.status(400).json({ error: "users array required" }); return; }
+
+  const results: Array<{ success: boolean; email: string; error?: string; user?: ReturnType<typeof toUser> }> = [];
+
+  for (const u of users) {
+    if (!u.name || !u.email || !u.password || !u.role) {
+      results.push({ success: false, email: u.email ?? "?", error: "Missing required fields" });
+      continue;
+    }
+    try {
+      const passwordHash = await bcrypt.hash(u.password, 10);
+      const [created] = await db.insert(usersTable).values({
+        name: u.name, email: u.email.toLowerCase(), passwordHash, role: u.role as any,
+        studentId: u.studentId ?? null, department: u.department ?? null,
+      }).returning();
+      results.push({ success: true, email: u.email, user: toUser(created) });
+    } catch (err: any) {
+      const msg = err?.message?.includes("unique") ? "Email already exists" : (err?.message ?? "Unknown error");
+      results.push({ success: false, email: u.email, error: msg });
+    }
+  }
+
+  const succeeded = results.filter(r => r.success).length;
+  res.status(200).json({ succeeded, failed: results.length - succeeded, results });
+});
+
 export default router;

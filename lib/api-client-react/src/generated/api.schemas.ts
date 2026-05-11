@@ -557,6 +557,32 @@ export interface FileSubmissionReviewInput {
   reviewComment?: string;
 }
 
+export type BulkCreateResultResultsItem = {
+  success: boolean;
+  email: string;
+  error?: string;
+  user?: User;
+};
+
+export interface BulkCreateResult {
+  succeeded: number;
+  failed: number;
+  results: BulkCreateResultResultsItem[];
+}
+
+export type BulkInviteResultResultsItem = {
+  success: boolean;
+  email: string;
+  token?: string;
+  error?: string;
+};
+
+export interface BulkInviteResult {
+  succeeded: number;
+  failed: number;
+  results: BulkInviteResultResultsItem[];
+}
+
 export type CourseInvitationStatus =
   (typeof CourseInvitationStatus)[keyof typeof CourseInvitationStatus];
 
@@ -590,6 +616,10 @@ export interface InvitationInput {
   email: string;
 }
 
+export type BulkCreateUsersBody = {
+  users: UserInput[];
+};
+
 export type ListFileSubmissionsParams = {
   courseId?: number;
   status?: ListFileSubmissionsStatus;
@@ -604,3 +634,7 @@ export const ListFileSubmissionsStatus = {
   rejected: "rejected",
   revision_requested: "revision_requested",
 } as const;
+
+export type BulkCreateCourseInvitationsBody = {
+  emails: string[];
+};

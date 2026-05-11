@@ -20,9 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import {
   Plus, BookOpen, Users, Mail, Copy, Check, X, Clock, ChevronRight,
-  GraduationCap, Send, Trash2, ExternalLink,
+  GraduationCap, Send, Trash2, ExternalLink, Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
+import BulkInvite from "../components/bulk-invite";
 
 export default function TeacherPanel() {
   const { user } = useAuth();
@@ -160,6 +161,7 @@ function CourseRow({ course, isManaging, onManage }: { course: any; isManaging: 
 function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [showBulkInvite, setShowBulkInvite] = useState(false);
   const { toast } = useToast();
 
   const { data: invitations, refetch } = useListCourseInvitations(course.id, { query: { enabled: !!course.id } as any });
@@ -212,12 +214,26 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
     <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            Manage Invitations — {course.title}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              Manage Invitations — {course.title}
+            </DialogTitle>
+            <Button size="sm" variant="outline" className="gap-1.5 mr-6" onClick={() => setShowBulkInvite(true)}>
+              <Sparkles className="h-3.5 w-3.5" /> Bulk Invite
+            </Button>
+          </div>
         </DialogHeader>
 
+        {showBulkInvite ? (
+          <div className="flex-1 overflow-y-auto py-1">
+            <BulkInvite
+              courses={[{ id: course.id, title: course.title, code: course.code ?? "" }]}
+              defaultCourseId={course.id}
+              onClose={() => { setShowBulkInvite(false); refetch(); }}
+            />
+          </div>
+        ) : (
         <div className="flex-1 overflow-y-auto space-y-5 py-1">
           {/* Invite form */}
           <Card className="border-primary/20 bg-primary/5">
@@ -313,6 +329,7 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
             </div>
           )}
         </div>
+        )}
 
         <DialogFooter className="flex-shrink-0 border-t pt-4 mt-2">
           <Button variant="outline" onClick={onClose}>Close</Button>
