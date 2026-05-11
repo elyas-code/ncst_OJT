@@ -6,7 +6,6 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
-import { BookOpen } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -31,9 +30,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-background p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-            <BookOpen className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="NCST Logo" className="h-20 w-auto object-contain drop-shadow-md" />
         </div>
         
         <Card className="border-border shadow-xl">

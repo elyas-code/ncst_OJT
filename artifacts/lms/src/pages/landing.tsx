@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
 import { BookOpen, Users, FileText, Shield, ChevronRight, GraduationCap, Award, Globe } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,10 +48,8 @@ export default function Landing() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-4 w-4 text-primary-foreground" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="NCST" className="h-9 w-auto object-contain" />
             <span className="font-bold text-lg tracking-tight">NCST Portal</span>
           </div>
           <div className="flex items-center gap-3">

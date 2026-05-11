@@ -3,8 +3,8 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useLogout } from "@workspace/api-client-react";
 import {
-  BookOpen, Home, Settings, Users, LogOut, Bell,
-  Upload, LayoutDashboard, GraduationCap, ChevronDown,
+  Home, Settings, Users, LogOut, Bell,
+  Upload, LayoutDashboard, GraduationCap, ChevronDown, BookOpen,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -77,9 +77,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <aside className="w-60 bg-white dark:bg-card border-r border-slate-200 dark:border-border flex flex-col hidden md:flex flex-shrink-0">
         {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-slate-100 dark:border-border gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            <BookOpen className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="NCST" className="h-8 w-auto object-contain flex-shrink-0" />
           <div className="leading-none">
             <span className="font-bold text-sm tracking-tight block">NCST Portal</span>
             <span className="text-[10px] text-muted-foreground">Learning Management</span>

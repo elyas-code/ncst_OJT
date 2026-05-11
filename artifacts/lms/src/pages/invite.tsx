@@ -54,9 +54,7 @@ export default function Invite() {
       {/* Header */}
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto flex items-center h-16 px-6 gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <BookOpen className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="NCST" className="h-8 w-auto object-contain" />
           <span className="font-bold text-lg tracking-tight">NCST Portal</span>
         </div>
       </header>
