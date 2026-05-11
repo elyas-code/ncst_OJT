@@ -84,7 +84,7 @@ function AddUserDialog() {
 
 function AddCourseDialog({ teachers }: { teachers: any[] }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", code: "", description: "", teacherId: "", semester: "", academicYear: "2025-2026" });
+  const [form, setForm] = useState({ title: "", code: "", description: "", teacherId: "", semester: "Semester 1", academicYear: "2025-2026" });
   const create = useCreateCourse();
   const qc = useQueryClient();
 
@@ -120,7 +120,16 @@ function AddCourseDialog({ teachers }: { teachers: any[] }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Semester</Label><Input value={form.semester} onChange={f("semester")} /></div>
+            <div className="space-y-1">
+              <Label>Semester</Label>
+              <Select value={form.semester} onValueChange={v => setForm(p => ({ ...p, semester: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Semester 1">Semester 1</SelectItem>
+                  <SelectItem value="Semester 2">Semester 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1"><Label>Academic Year</Label><Input value={form.academicYear} onChange={f("academicYear")} /></div>
           </div>
           <DialogFooter><Button type="submit" disabled={create.isPending}>{create.isPending ? "Creating..." : "Create Course"}</Button></DialogFooter>
@@ -242,9 +251,14 @@ export default function Admin() {
                         <TableCell className="text-sm">{u.department ?? "-"}</TableCell>
                         <TableCell className="text-sm font-mono">{u.studentId ?? "-"}</TableCell>
                         <TableCell>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive"
-                            onClick={() => deleteUser.mutate({ id: u.id } as any, { onSuccess: () => qc.invalidateQueries() })}>
-                            <Trash2 className="h-3 w-3" />
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                            disabled={deleteUser.isPending}
+                            onClick={() => {
+                              if (confirm(`Permanently delete ${u.name} (${u.email})?\n\nThis will also remove all of their enrollments, submissions, and grades. This cannot be undone.`)) {
+                                deleteUser.mutate({ id: u.id } as any, { onSuccess: () => qc.invalidateQueries() });
+                              }
+                            }}>
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </TableCell>
                       </TableRow>

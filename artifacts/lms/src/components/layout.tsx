@@ -3,8 +3,8 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useLogout } from "@workspace/api-client-react";
 import {
-  Home, Settings, Users, LogOut, Bell,
-  Upload, LayoutDashboard, GraduationCap, ChevronDown, BookOpen,
+  Settings, Users, LogOut, Bell,
+  Upload, LayoutDashboard, GraduationCap, BookOpen, Search,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -44,9 +44,9 @@ const navGroups: { label?: string; items: NavItem[] }[] = [
 ];
 
 const roleColors: Record<string, string> = {
-  student: "bg-blue-100 text-blue-700",
-  teacher: "bg-emerald-100 text-emerald-700",
-  admin: "bg-violet-100 text-violet-700",
+  student: "bg-blue-500/15 text-blue-300 border border-blue-500/20",
+  teacher: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+  admin: "bg-violet-500/15 text-violet-300 border border-violet-500/20",
 };
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -72,27 +72,34 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       : location.startsWith(href);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-background text-foreground">
-      {/* Sidebar */}
-      <aside className="w-60 bg-white dark:bg-card border-r border-slate-200 dark:border-border flex flex-col hidden md:flex flex-shrink-0">
+    <div className="flex min-h-screen bg-background text-foreground">
+      {/* Sidebar — premium dark navy */}
+      <aside className="w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col hidden md:flex flex-shrink-0 relative">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+          backgroundSize: "20px 20px",
+        }} />
+
         {/* Logo */}
-        <div className="h-16 flex items-center px-5 border-b border-slate-100 dark:border-border gap-2.5">
-          <img src="/logo.png" alt="NCST" className="h-8 w-auto object-contain flex-shrink-0" />
+        <div className="h-16 flex items-center px-5 border-b border-sidebar-border gap-3 relative">
+          <div className="bg-white rounded-lg p-1 shadow-sm flex-shrink-0">
+            <img src="/logo.png" alt="NCST" className="h-7 w-7 object-contain" />
+          </div>
           <div className="leading-none">
             <span className="font-bold text-sm tracking-tight block">NCST Portal</span>
-            <span className="text-[10px] text-muted-foreground">Learning Management</span>
+            <span className="text-[10px] text-sidebar-foreground/60 mt-1 block uppercase tracking-widest">Campus LMS</span>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto relative">
           {navGroups.map((group, gi) => {
             const visibleItems = group.items.filter(item => item.roles.includes(user.role));
             if (visibleItems.length === 0) return null;
             return (
-              <div key={gi} className={gi > 0 ? "pt-4" : ""}>
+              <div key={gi} className={gi > 0 ? "pt-5" : ""}>
                 {group.label && (
-                  <p className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  <p className="px-2.5 mb-2 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">
                     {group.label}
                   </p>
                 )}
@@ -103,13 +110,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-all duration-100 ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 relative group ${
                         active
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-muted hover:text-slate-900 dark:hover:text-foreground"
+                          ? "bg-sidebar-accent text-white shadow-sm"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
                       }`}
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-sidebar-primary" />}
+                      <Icon className={`h-4 w-4 flex-shrink-0 transition-colors ${active ? "text-sidebar-primary" : ""}`} />
                       {item.label}
                     </Link>
                   );
@@ -120,25 +128,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         {/* User section */}
-        <div className="border-t border-slate-100 dark:border-border p-3">
-          <div className="flex items-center gap-2.5 p-2 rounded-md">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-semibold text-primary-foreground text-sm flex-shrink-0">
+        <div className="border-t border-sidebar-border p-3 relative">
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/30">
+            <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center font-bold text-white text-sm flex-shrink-0 shadow-sm ring-1 ring-white/10">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-none truncate">{user.name}</p>
-              <span className={`inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded capitalize ${roleColors[user.role] ?? "bg-muted text-muted-foreground"}`}>
+              <p className="text-sm font-semibold leading-none truncate text-white">{user.name}</p>
+              <span className={`inline-block mt-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${roleColors[user.role] ?? ""}`}>
                 {user.role}
               </span>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+              className="h-8 w-8 text-sidebar-foreground/60 hover:text-white hover:bg-destructive/20 flex-shrink-0"
               onClick={handleLogout}
               title="Sign out"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -147,21 +155,39 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 border-b border-slate-200 dark:border-border bg-white dark:bg-card flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="text-sm text-muted-foreground font-medium">
-            Nasser Centre for Science &amp; Technology
+        <header className="h-16 border-b border-border bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              Nasser Centre for Science &amp; Technology
+            </p>
+            <p className="text-sm font-semibold mt-0.5 capitalize text-foreground">
+              {location === "/dashboard" ? "Dashboard"
+                : location.startsWith("/courses") ? "Courses"
+                : location.startsWith("/submissions") ? "Submissions"
+                : location.startsWith("/teacher") ? "Teaching Panel"
+                : location.startsWith("/admin") ? "Administration"
+                : location.startsWith("/settings") ? "Settings"
+                : location.startsWith("/grades") ? "Grades"
+                : location.startsWith("/quiz") ? "Assessment"
+                : "Workspace"}
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 relative text-muted-foreground">
+            <div className="hidden lg:flex items-center gap-2 px-3 h-9 w-72 rounded-lg border border-border bg-background text-xs text-muted-foreground">
+              <Search className="h-3.5 w-3.5" />
+              <span className="flex-1">Search courses, files, students…</span>
+              <kbd className="text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded border border-border">⌘ K</kbd>
+            </div>
+            <Button variant="ghost" size="icon" className="h-9 w-9 relative text-muted-foreground hover:text-foreground">
               <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
             </Button>
           </div>
         </header>
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto px-8 py-10">
             {children}
           </div>
         </main>

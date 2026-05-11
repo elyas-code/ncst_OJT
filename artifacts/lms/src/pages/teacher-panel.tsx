@@ -354,7 +354,7 @@ function CreateCourseDialog({ open, onClose, onCreated, teacherId }: {
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    title: "", code: "", description: "", semester: "Fall",
+    title: "", code: "", description: "", semester: "Semester 1",
     academicYear: new Date().getFullYear().toString(),
     teacherId: teacherId.toString(),
   });
@@ -409,7 +409,7 @@ function CreateCourseDialog({ open, onClose, onCreated, teacherId }: {
               <Select value={form.semester} onValueChange={v => f("semester", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["Fall", "Spring", "Summer"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {["Semester 1", "Semester 2"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

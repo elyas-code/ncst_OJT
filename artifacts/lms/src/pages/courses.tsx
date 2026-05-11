@@ -118,7 +118,7 @@ function CreateCourseForm({ onSuccess }: { onSuccess: () => void }) {
     title: "",
     code: "",
     description: "",
-    semester: "Fall",
+    semester: "Semester 1",
     academicYear: new Date().getFullYear().toString(),
     teacherId: user?.role === "teacher" ? user.id.toString() : "",
   });
@@ -206,9 +206,8 @@ function CreateCourseForm({ onSuccess }: { onSuccess: () => void }) {
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Fall">Fall</SelectItem>
-              <SelectItem value="Spring">Spring</SelectItem>
-              <SelectItem value="Summer">Summer</SelectItem>
+              <SelectItem value="Semester 1">Semester 1</SelectItem>
+              <SelectItem value="Semester 2">Semester 2</SelectItem>
             </SelectContent>
           </Select>
         </div>
