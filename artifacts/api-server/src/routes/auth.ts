@@ -19,7 +19,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase().trim()));
   if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
