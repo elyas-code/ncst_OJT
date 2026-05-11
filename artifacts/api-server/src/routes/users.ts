@@ -1,6 +1,9 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcrypt";
-import { db, usersTable } from "@workspace/db";
+import {
+  db, usersTable, coursesTable, filesTable, announcementsTable,
+  courseInvitationsTable, fileSubmissionsTable,
+} from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -51,10 +54,35 @@ router.patch("/users/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/users/:id", async (req, res): Promise<void> => {
+  const callerId = (req.session as any)?.userId;
+  if (!callerId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const [caller] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, callerId));
+  if (!caller || caller.role !== "admin") { res.status(403).json({ error: "Admin only" }); return; }
+
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
-  await db.delete(usersTable).where(eq(usersTable.id, id));
-  res.sendStatus(204);
+  if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (id === callerId) { res.status(400).json({ error: "You cannot delete your own account" }); return; }
+
+  const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  if (!target) { res.status(404).json({ error: "Not found" }); return; }
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(coursesTable).where(eq(coursesTable.teacherId, id));
+      await tx.delete(filesTable).where(eq(filesTable.uploadedBy, id));
+      await tx.delete(announcementsTable).where(eq(announcementsTable.authorId, id));
+      await tx.delete(courseInvitationsTable).where(eq(courseInvitationsTable.invitedBy, id));
+      await tx.update(fileSubmissionsTable)
+        .set({ reviewerId: null })
+        .where(eq(fileSubmissionsTable.reviewerId, id));
+      await tx.delete(usersTable).where(eq(usersTable.id, id));
+    });
+    res.sendStatus(204);
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to delete user");
+    res.status(500).json({ error: err?.message ?? "Failed to delete user" });
+  }
 });
 
 // Bulk create users (admin only)
