@@ -20,6 +20,7 @@ tags:
   - name: enrollments
   - name: users
   - name: file-submissions
+  - name: invitations
 
 paths:
   /healthz:
@@ -1076,6 +1077,118 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileSubmission"
 
+  # ─── INVITATIONS ─────────────────────────────────────────────────────────────
+  /courses/{courseId}/invitations:
+    get:
+      operationId: listCourseInvitations
+      tags: [invitations]
+      summary: List invitations for a course (teacher/admin)
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseInvitation"
+    post:
+      operationId: createCourseInvitation
+      tags: [invitations]
+      summary: Invite a student by email (teacher/admin)
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationInput"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseInvitation"
+        "409":
+          description: Pending invitation already exists
+
+  /invitations/{id}:
+    delete:
+      operationId: cancelInvitation
+      tags: [invitations]
+      summary: Cancel an invitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled invitation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseInvitation"
+
+  /invitations/{token}:
+    get:
+      operationId: getInvitationByToken
+      tags: [invitations]
+      summary: Get invitation details by token (public)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseInvitation"
+        "404":
+          description: Not found
+        "410":
+          description: Expired or already used
+
+  /invitations/{token}/accept:
+    post:
+      operationId: acceptInvitation
+      tags: [invitations]
+      summary: Accept an invitation (student must be logged in)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation accepted, student enrolled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseInvitation"
+        "401":
+          description: Must be logged in
+        "403":
+          description: Email mismatch
+
 components:
   schemas:
     HealthStatus:
@@ -1809,4 +1922,45 @@ components:
           type: string
           enum: [approved, rejected, revision_requested]
         reviewComment:
+          type: string
+
+    # ─── INVITATION ────────────────────────────────────────────────────────────
+    CourseInvitation:
+      type: object
+      required: [id, courseId, email, token, status, invitedBy, createdAt, expiresAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        courseTitle:
+          type: ["string", "null"]
+        courseCode:
+          type: ["string", "null"]
+        email:
+          type: string
+        token:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, cancelled, expired]
+        invitedBy:
+          type: integer
+        inviterName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    InvitationInput:
+      type: object
+      required: [email]
+      properties:
+        email:
           type: string

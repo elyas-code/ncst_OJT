@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "../context/AuthContext";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -14,13 +14,15 @@ export default function Login() {
   const loginMutation = useLogin();
   const { setUser } = useAuth();
   const [, setLocation] = useLocation();
+  const search = useSearch();
+  const redirectTo = new URLSearchParams(search).get("redirect") ?? "/dashboard";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate({ data: { email, password } }, {
       onSuccess: (data) => {
         setUser(data.user);
-        setLocation("/");
+        setLocation(redirectTo);
       }
     });
   };
@@ -89,7 +91,7 @@ export default function Login() {
               <span>|</span>
               <button type="button" onClick={() => { setEmail("teacher@example.com"); setPassword("password123"); }} className="underline">Teacher</button>
               <span>|</span>
-              <button type="button" onClick={() => { setEmail("admin@example.com"); setPassword("password123"); }} className="underline">Admin</button>
+              <button type="button" onClick={() => { setEmail("admin@ncst.edu.bh"); setPassword("password123"); }} className="underline">Admin</button>
             </div>
           </CardFooter>
         </Card>

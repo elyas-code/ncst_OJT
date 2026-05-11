@@ -20,6 +20,8 @@ const Grades = lazy(() => import("./pages/grades"));
 const Proctor = lazy(() => import("./pages/proctor"));
 const Admin = lazy(() => import("./pages/admin"));
 const Submissions = lazy(() => import("./pages/submissions"));
+const TeacherPanel = lazy(() => import("./pages/teacher-panel"));
+const Invite = lazy(() => import("./pages/invite"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +98,8 @@ function Router() {
       <Route path="/quiz/:quizId/results" component={() => <ProtectedRoute component={QuizResults} />} />
       <Route path="/quiz/:quizId" component={() => <ProtectedRoute component={QuizTake} />} />
       <Route path="/admin" component={() => <ProtectedRoute component={Admin} roles={["admin"]} />} />
+      <Route path="/teacher" component={() => <ProtectedRoute component={TeacherPanel} roles={["teacher", "admin"]} />} />
+      <Route path="/invite/:token" component={() => <Suspense fallback={null}><Invite /></Suspense>} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route component={NotFound} />
     </Switch>

@@ -27,6 +27,7 @@ import type {
   CourseDashboard,
   CourseFile,
   CourseInput,
+  CourseInvitation,
   CourseUpdate,
   Enrollment,
   EnrollmentInput,
@@ -42,6 +43,7 @@ import type {
   HealthStatus,
   HeartbeatInput,
   HeartbeatResponse,
+  InvitationInput,
   ListFileSubmissionsParams,
   LoginInput,
   Module,
@@ -4526,4 +4528,440 @@ export const useReviewFileSubmission = <
   TContext
 > => {
   return useMutation(getReviewFileSubmissionMutationOptions(options));
+};
+
+/**
+ * @summary List invitations for a course (teacher/admin)
+ */
+export const getListCourseInvitationsUrl = (courseId: number) => {
+  return `/api/courses/${courseId}/invitations`;
+};
+
+export const listCourseInvitations = async (
+  courseId: number,
+  options?: RequestInit,
+): Promise<CourseInvitation[]> => {
+  return customFetch<CourseInvitation[]>(
+    getListCourseInvitationsUrl(courseId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListCourseInvitationsQueryKey = (courseId: number) => {
+  return [`/api/courses/${courseId}/invitations`] as const;
+};
+
+export const getListCourseInvitationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCourseInvitations>>,
+  TError = ErrorType<unknown>,
+>(
+  courseId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCourseInvitations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListCourseInvitationsQueryKey(courseId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listCourseInvitations>>
+  > = ({ signal }) =>
+    listCourseInvitations(courseId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!courseId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCourseInvitations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCourseInvitationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCourseInvitations>>
+>;
+export type ListCourseInvitationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List invitations for a course (teacher/admin)
+ */
+
+export function useListCourseInvitations<
+  TData = Awaited<ReturnType<typeof listCourseInvitations>>,
+  TError = ErrorType<unknown>,
+>(
+  courseId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCourseInvitations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCourseInvitationsQueryOptions(courseId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Invite a student by email (teacher/admin)
+ */
+export const getCreateCourseInvitationUrl = (courseId: number) => {
+  return `/api/courses/${courseId}/invitations`;
+};
+
+export const createCourseInvitation = async (
+  courseId: number,
+  invitationInput: InvitationInput,
+  options?: RequestInit,
+): Promise<CourseInvitation> => {
+  return customFetch<CourseInvitation>(getCreateCourseInvitationUrl(courseId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(invitationInput),
+  });
+};
+
+export const getCreateCourseInvitationMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCourseInvitation>>,
+    TError,
+    { courseId: number; data: BodyType<InvitationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCourseInvitation>>,
+  TError,
+  { courseId: number; data: BodyType<InvitationInput> },
+  TContext
+> => {
+  const mutationKey = ["createCourseInvitation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCourseInvitation>>,
+    { courseId: number; data: BodyType<InvitationInput> }
+  > = (props) => {
+    const { courseId, data } = props ?? {};
+
+    return createCourseInvitation(courseId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCourseInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCourseInvitation>>
+>;
+export type CreateCourseInvitationMutationBody = BodyType<InvitationInput>;
+export type CreateCourseInvitationMutationError = ErrorType<void>;
+
+/**
+ * @summary Invite a student by email (teacher/admin)
+ */
+export const useCreateCourseInvitation = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCourseInvitation>>,
+    TError,
+    { courseId: number; data: BodyType<InvitationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCourseInvitation>>,
+  TError,
+  { courseId: number; data: BodyType<InvitationInput> },
+  TContext
+> => {
+  return useMutation(getCreateCourseInvitationMutationOptions(options));
+};
+
+/**
+ * @summary Cancel an invitation
+ */
+export const getCancelInvitationUrl = (id: number) => {
+  return `/api/invitations/${id}`;
+};
+
+export const cancelInvitation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<CourseInvitation> => {
+  return customFetch<CourseInvitation>(getCancelInvitationUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getCancelInvitationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInvitation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelInvitation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["cancelInvitation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelInvitation>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return cancelInvitation(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelInvitation>>
+>;
+
+export type CancelInvitationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cancel an invitation
+ */
+export const useCancelInvitation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInvitation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelInvitation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getCancelInvitationMutationOptions(options));
+};
+
+/**
+ * @summary Get invitation details by token (public)
+ */
+export const getGetInvitationByTokenUrl = (token: string) => {
+  return `/api/invitations/${token}`;
+};
+
+export const getInvitationByToken = async (
+  token: string,
+  options?: RequestInit,
+): Promise<CourseInvitation> => {
+  return customFetch<CourseInvitation>(getGetInvitationByTokenUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetInvitationByTokenQueryKey = (token: string) => {
+  return [`/api/invitations/${token}`] as const;
+};
+
+export const getGetInvitationByTokenQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInvitationByToken>>,
+  TError = ErrorType<void>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getInvitationByToken>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetInvitationByTokenQueryKey(token);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getInvitationByToken>>
+  > = ({ signal }) =>
+    getInvitationByToken(token, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!token,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInvitationByToken>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetInvitationByTokenQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getInvitationByToken>>
+>;
+export type GetInvitationByTokenQueryError = ErrorType<void>;
+
+/**
+ * @summary Get invitation details by token (public)
+ */
+
+export function useGetInvitationByToken<
+  TData = Awaited<ReturnType<typeof getInvitationByToken>>,
+  TError = ErrorType<void>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getInvitationByToken>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetInvitationByTokenQueryOptions(token, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Accept an invitation (student must be logged in)
+ */
+export const getAcceptInvitationUrl = (token: string) => {
+  return `/api/invitations/${token}/accept`;
+};
+
+export const acceptInvitation = async (
+  token: string,
+  options?: RequestInit,
+): Promise<CourseInvitation> => {
+  return customFetch<CourseInvitation>(getAcceptInvitationUrl(token), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAcceptInvitationMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptInvitation>>,
+    TError,
+    { token: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof acceptInvitation>>,
+  TError,
+  { token: string },
+  TContext
+> => {
+  const mutationKey = ["acceptInvitation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof acceptInvitation>>,
+    { token: string }
+  > = (props) => {
+    const { token } = props ?? {};
+
+    return acceptInvitation(token, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AcceptInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof acceptInvitation>>
+>;
+
+export type AcceptInvitationMutationError = ErrorType<void>;
+
+/**
+ * @summary Accept an invitation (student must be logged in)
+ */
+export const useAcceptInvitation = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptInvitation>>,
+    TError,
+    { token: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof acceptInvitation>>,
+  TError,
+  { token: string },
+  TContext
+> => {
+  return useMutation(getAcceptInvitationMutationOptions(options));
 };

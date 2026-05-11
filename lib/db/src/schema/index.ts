@@ -8,3 +8,4 @@ export * from "./attempts";
 export * from "./alerts";
 export * from "./announcements";
 export * from "./file-submissions";
+export * from "./invitations";

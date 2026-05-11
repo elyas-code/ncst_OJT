@@ -557,6 +557,39 @@ export interface FileSubmissionReviewInput {
   reviewComment?: string;
 }
 
+export type CourseInvitationStatus =
+  (typeof CourseInvitationStatus)[keyof typeof CourseInvitationStatus];
+
+export const CourseInvitationStatus = {
+  pending: "pending",
+  accepted: "accepted",
+  cancelled: "cancelled",
+  expired: "expired",
+} as const;
+
+export interface CourseInvitation {
+  id: number;
+  courseId: number;
+  /** @nullable */
+  courseTitle?: string | null;
+  /** @nullable */
+  courseCode?: string | null;
+  email: string;
+  token: string;
+  status: CourseInvitationStatus;
+  invitedBy: number;
+  /** @nullable */
+  inviterName?: string | null;
+  createdAt: string;
+  expiresAt: string;
+  /** @nullable */
+  acceptedAt?: string | null;
+}
+
+export interface InvitationInput {
+  email: string;
+}
+
 export type ListFileSubmissionsParams = {
   courseId?: number;
   status?: ListFileSubmissionsStatus;

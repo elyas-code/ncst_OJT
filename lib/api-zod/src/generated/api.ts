@@ -1007,3 +1007,105 @@ export const ReviewFileSubmissionResponse = zod.object({
   reviewedAt: zod.coerce.date().nullish(),
   updatedAt: zod.coerce.date().optional(),
 });
+
+/**
+ * @summary List invitations for a course (teacher/admin)
+ */
+export const ListCourseInvitationsParams = zod.object({
+  courseId: zod.coerce.number(),
+});
+
+export const ListCourseInvitationsResponseItem = zod.object({
+  id: zod.number(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  email: zod.string(),
+  token: zod.string(),
+  status: zod.enum(["pending", "accepted", "cancelled", "expired"]),
+  invitedBy: zod.number(),
+  inviterName: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  expiresAt: zod.coerce.date(),
+  acceptedAt: zod.coerce.date().nullish(),
+});
+export const ListCourseInvitationsResponse = zod.array(
+  ListCourseInvitationsResponseItem,
+);
+
+/**
+ * @summary Invite a student by email (teacher/admin)
+ */
+export const CreateCourseInvitationParams = zod.object({
+  courseId: zod.coerce.number(),
+});
+
+export const CreateCourseInvitationBody = zod.object({
+  email: zod.string(),
+});
+
+/**
+ * @summary Cancel an invitation
+ */
+export const CancelInvitationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CancelInvitationResponse = zod.object({
+  id: zod.number(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  email: zod.string(),
+  token: zod.string(),
+  status: zod.enum(["pending", "accepted", "cancelled", "expired"]),
+  invitedBy: zod.number(),
+  inviterName: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  expiresAt: zod.coerce.date(),
+  acceptedAt: zod.coerce.date().nullish(),
+});
+
+/**
+ * @summary Get invitation details by token (public)
+ */
+export const GetInvitationByTokenParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const GetInvitationByTokenResponse = zod.object({
+  id: zod.number(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  email: zod.string(),
+  token: zod.string(),
+  status: zod.enum(["pending", "accepted", "cancelled", "expired"]),
+  invitedBy: zod.number(),
+  inviterName: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  expiresAt: zod.coerce.date(),
+  acceptedAt: zod.coerce.date().nullish(),
+});
+
+/**
+ * @summary Accept an invitation (student must be logged in)
+ */
+export const AcceptInvitationParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const AcceptInvitationResponse = zod.object({
+  id: zod.number(),
+  courseId: zod.number(),
+  courseTitle: zod.string().nullish(),
+  courseCode: zod.string().nullish(),
+  email: zod.string(),
+  token: zod.string(),
+  status: zod.enum(["pending", "accepted", "cancelled", "expired"]),
+  invitedBy: zod.number(),
+  inviterName: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  expiresAt: zod.coerce.date(),
+  acceptedAt: zod.coerce.date().nullish(),
+});

@@ -12,6 +12,7 @@ import gradesRouter from "./grades";
 import alertsRouter from "./alerts";
 import announcementsRouter from "./announcements";
 import fileSubmissionsRouter from "./file-submissions";
+import invitationsRouter from "./invitations";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(gradesRouter);
 router.use(alertsRouter);
 router.use(announcementsRouter);
 router.use(fileSubmissionsRouter);
+router.use(invitationsRouter);
 
 export default router;

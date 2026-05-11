@@ -1,0 +1,105 @@
+import { Router, type IRouter } from "express";
+import { db, courseInvitationsTable, enrollmentsTable, usersTable, coursesTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import crypto from "crypto";
+
+const router: IRouter = Router();
+
+const getSessionUser = async (req: any) => {
+  const userId = req.session?.userId;
+  if (!userId) return null;
+  const [user] = await db.select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, role: usersTable.role })
+    .from(usersTable).where(eq(usersTable.id, userId));
+  return user ?? null;
+};
+
+const enrich = async (inv: typeof courseInvitationsTable.$inferSelect) => {
+  const [course] = await db.select({ title: coursesTable.title, code: coursesTable.code }).from(coursesTable).where(eq(coursesTable.id, inv.courseId));
+  const [inviter] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, inv.invitedBy));
+  return { ...inv, courseTitle: course?.title ?? null, courseCode: course?.code ?? null, inviterName: inviter?.name ?? null };
+};
+
+router.get("/courses/:courseId/invitations", async (req, res): Promise<void> => {
+  const user = await getSessionUser(req);
+  if (!user || user.role === "student") { res.status(403).json({ error: "Forbidden" }); return; }
+  const courseId = parseInt(Array.isArray(req.params.courseId) ? req.params.courseId[0] : req.params.courseId, 10);
+  const invitations = await db.select().from(courseInvitationsTable).where(eq(courseInvitationsTable.courseId, courseId));
+  const enriched = await Promise.all(invitations.map(enrich));
+  res.json(enriched);
+});
+
+router.post("/courses/:courseId/invitations", async (req, res): Promise<void> => {
+  const user = await getSessionUser(req);
+  if (!user || user.role === "student") { res.status(403).json({ error: "Forbidden" }); return; }
+  const courseId = parseInt(Array.isArray(req.params.courseId) ? req.params.courseId[0] : req.params.courseId, 10);
+  const { email } = req.body;
+  if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+
+  // Check for existing pending invitation
+  const [existing] = await db.select().from(courseInvitationsTable)
+    .where(and(eq(courseInvitationsTable.courseId, courseId), eq(courseInvitationsTable.email, email.toLowerCase()), eq(courseInvitationsTable.status, "pending")));
+  if (existing) { res.status(409).json({ error: "A pending invitation already exists for this email" }); return; }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  const [inv] = await db.insert(courseInvitationsTable).values({
+    courseId, email: email.toLowerCase(), token, invitedBy: user.id, expiresAt,
+  }).returning();
+  res.status(201).json(await enrich(inv));
+});
+
+router.delete("/invitations/:id", async (req, res): Promise<void> => {
+  const user = await getSessionUser(req);
+  if (!user || user.role === "student") { res.status(403).json({ error: "Forbidden" }); return; }
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [inv] = await db.update(courseInvitationsTable).set({ status: "cancelled" }).where(eq(courseInvitationsTable.id, id)).returning();
+  if (!inv) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(await enrich(inv));
+});
+
+// Public – no auth required
+router.get("/invitations/:token", async (req, res): Promise<void> => {
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const [inv] = await db.select().from(courseInvitationsTable).where(eq(courseInvitationsTable.token, token));
+  if (!inv) { res.status(404).json({ error: "Invitation not found" }); return; }
+
+  if (inv.status !== "pending") { res.status(410).json({ error: `Invitation is ${inv.status}` }); return; }
+  if (new Date() > inv.expiresAt) {
+    await db.update(courseInvitationsTable).set({ status: "expired" }).where(eq(courseInvitationsTable.id, inv.id));
+    res.status(410).json({ error: "Invitation has expired" }); return;
+  }
+  res.json(await enrich(inv));
+});
+
+// Accept invitation — student must be logged in
+router.post("/invitations/:token/accept", async (req, res): Promise<void> => {
+  const user = await getSessionUser(req);
+  if (!user) { res.status(401).json({ error: "You must be signed in to accept an invitation" }); return; }
+
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const [inv] = await db.select().from(courseInvitationsTable).where(eq(courseInvitationsTable.token, token));
+  if (!inv) { res.status(404).json({ error: "Invitation not found" }); return; }
+  if (inv.status !== "pending") { res.status(410).json({ error: `Invitation is ${inv.status}` }); return; }
+  if (new Date() > inv.expiresAt) {
+    await db.update(courseInvitationsTable).set({ status: "expired" }).where(eq(courseInvitationsTable.id, inv.id));
+    res.status(410).json({ error: "Invitation has expired" }); return;
+  }
+  if (inv.email !== user.email.toLowerCase()) {
+    res.status(403).json({ error: `This invitation was sent to ${inv.email}. You are signed in as ${user.email}.` }); return;
+  }
+
+  // Check if already enrolled
+  const [already] = await db.select().from(enrollmentsTable)
+    .where(and(eq(enrollmentsTable.courseId, inv.courseId), eq(enrollmentsTable.studentId, user.id)));
+  if (!already) {
+    await db.insert(enrollmentsTable).values({ courseId: inv.courseId, studentId: user.id });
+  }
+
+  const [updated] = await db.update(courseInvitationsTable)
+    .set({ status: "accepted", acceptedAt: new Date() })
+    .where(eq(courseInvitationsTable.id, inv.id)).returning();
+  res.json(await enrich(updated));
+});
+
+export default router;

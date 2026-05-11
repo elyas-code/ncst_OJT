@@ -1,228 +1,363 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-import { useListCourses, useListAlerts, useGetCourseDashboard } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useListCourses, useListAlerts } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { BookOpen, Users, Bell, AlertTriangle } from "lucide-react";
+import {
+  BookOpen, Users, Bell, AlertTriangle, ChevronRight,
+  GraduationCap, FileText, BarChart3, Shield, Clock,
+} from "lucide-react";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
   if (!user) return null;
 
   return (
-    <div data-testid="dashboard-page" className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user.name}</h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening today.</p>
+    <div data-testid="dashboard-page" className="space-y-8">
+      {/* Greeting */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground font-medium mb-0.5">
+            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Welcome back, {user.name.split(" ")[0]}
+          </h1>
+        </div>
+        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize
+          ${user.role === "admin" ? "bg-violet-100 text-violet-700" :
+            user.role === "teacher" ? "bg-emerald-100 text-emerald-700" :
+            "bg-blue-100 text-blue-700"}`}>
+          {user.role}
+        </div>
       </div>
 
-      {user.role === "student" && <StudentDashboard />}
-      {user.role === "teacher" && <TeacherDashboard />}
+      {user.role === "student" && <StudentDashboard userId={user.id} />}
+      {user.role === "teacher" && <TeacherDashboard userId={user.id} />}
       {user.role === "admin" && <AdminDashboard />}
     </div>
   );
 }
 
-function StudentDashboard() {
-  const { data: courses, isLoading } = useListCourses();
+/* ─── STUDENT ─────────────────────────────────────────────────────────────── */
+function StudentDashboard({ userId }: { userId: number }) {
+  const { data: courses, isLoading } = useListCourses({ query: { enabled: true } as any });
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-48 w-full rounded-xl" />
-        ))}
-      </div>
-    );
-  }
-
-  const enrolledCourses = courses?.filter(c => true) || []; // In a real app, filter by enrollment
-
-  if (enrolledCourses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-          <BookOpen className="h-12 w-12 mb-4 opacity-20" />
-          <p>You are not enrolled in any courses yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const quickLinks = [
+    { label: "My Submissions", href: "/submissions", icon: FileText, desc: "Track file submission status" },
+    { label: "Browse Courses", href: "/courses", icon: BookOpen, desc: "View all available courses" },
+    { label: "Settings", href: "/settings", icon: Shield, desc: "Update your profile" },
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {enrolledCourses.map(course => (
-        <Link key={course.id} href={`/courses/${course.id}`}>
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full flex flex-col">
-            <CardHeader className="pb-3 flex-1">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                <Badge variant="outline">{course.code}</Badge>
-              </div>
-              <CardDescription className="mt-2">{course.teacherName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 mt-4">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Course Progress</span>
-                  <span>0%</span>
+    <div className="space-y-8">
+      {/* Quick links */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {quickLinks.map(l => {
+          const Icon = l.icon;
+          return (
+            <Link key={l.href} href={l.href}>
+              <Card className="border border-slate-200 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold leading-none">{l.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{l.desc}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Enrolled courses */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">Enrolled Courses</h2>
+          <Link href="/courses">
+            <Button variant="ghost" size="sm" className="text-xs gap-1">
+              View All <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
+          </div>
+        ) : !courses?.length ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center py-12 text-center">
+              <BookOpen className="h-10 w-10 text-muted-foreground/40 mb-3" />
+              <p className="font-medium text-sm">No courses yet</p>
+              <p className="text-xs text-muted-foreground mt-1">You'll be enrolled when a lecturer sends you an invitation.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {courses.map(course => (
+              <Link key={course.id} href={`/courses/${course.id}`}>
+                <Card className="border border-slate-200 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group h-full">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div>
+                        <p className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">{course.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{course.teacherName}</p>
+                      </div>
+                      <span className="font-mono text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded flex-shrink-0">{course.code}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{course.semester} {course.academicYear}</span>
+                      <Badge variant={course.isActive ? "default" : "secondary"} className="text-[10px]">
+                        {course.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── TEACHER ─────────────────────────────────────────────────────────────── */
+function TeacherDashboard({ userId }: { userId: number }) {
+  const { data: courses, isLoading } = useListCourses({ query: { enabled: true } as any });
+  const myCourses = courses?.filter(c => c.teacherId === userId) ?? [];
+
+  const totalStudents = myCourses.reduce((s, c) => s + (c.enrollmentCount ?? 0), 0);
+
+  const quickLinks = [
+    { label: "My Panel", href: "/teacher", icon: GraduationCap, desc: "Manage courses & invitations" },
+    { label: "Review Submissions", href: "/submissions", icon: FileText, desc: "Approve or reject student files" },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "My Courses", value: myCourses.length, icon: BookOpen, color: "text-blue-600 bg-blue-50" },
+          { label: "Total Students", value: totalStudents, icon: GraduationCap, color: "text-emerald-600 bg-emerald-50" },
+          { label: "Active Courses", value: myCourses.filter(c => c.isActive).length, icon: BarChart3, color: "text-violet-600 bg-violet-50" },
+          { label: "Pending Reviews", value: "—", icon: Clock, color: "text-amber-600 bg-amber-50" },
+        ].map(s => {
+          const Icon = s.icon;
+          return (
+            <Card key={s.label} className="border border-slate-200">
+              <CardContent className="p-4">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${s.color}`}>
+                  <Icon className="h-4 w-4" />
                 </div>
-                <Progress value={0} className="h-2" />
+                <div className="text-2xl font-bold">{s.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {quickLinks.map(l => {
+          const Icon = l.icon;
+          return (
+            <Link key={l.href} href={l.href}>
+              <Card className="border border-slate-200 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">{l.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{l.desc}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* My courses table */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">My Courses</h2>
+          <Link href="/teacher">
+            <Button variant="ghost" size="sm" className="text-xs gap-1">
+              Manage <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <Skeleton className="h-48 rounded-xl" />
+        ) : myCourses.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center py-10 text-center">
+              <BookOpen className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-sm font-medium">No courses yet</p>
+              <Link href="/teacher">
+                <Button size="sm" className="mt-3">Go to My Panel</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Course</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">Term</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Students</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {myCourses.map(course => (
+                  <tr key={course.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium leading-none">{course.title}</div>
+                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{course.code}</div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                      {course.semester} {course.academicYear}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="h-3.5 w-3.5" /> {course.enrollmentCount ?? 0}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={course.isActive ? "default" : "secondary"} className="text-xs">
+                        {course.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={`/courses/${course.id}`}>
+                        <Button variant="ghost" size="sm" className="text-xs gap-1">
+                          Open <ChevronRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── ADMIN ───────────────────────────────────────────────────────────────── */
+function AdminDashboard() {
+  const { data: alerts, isLoading: alertsLoading } = useListAlerts({ query: { enabled: true } as any });
+  const { data: courses } = useListCourses({ query: { enabled: true } as any });
+  const unresolvedAlerts = alerts?.filter(a => !a.resolved) ?? [];
+
+  const stats = [
+    { label: "Total Courses", value: courses?.length ?? "—", icon: BookOpen, color: "text-blue-600 bg-blue-50" },
+    { label: "Active Courses", value: courses?.filter(c => c.isActive).length ?? "—", icon: BarChart3, color: "text-emerald-600 bg-emerald-50" },
+    { label: "Unresolved Alerts", value: unresolvedAlerts.length, icon: AlertTriangle, color: "text-amber-600 bg-amber-50" },
+    { label: "Admin Panel", value: "→", icon: Users, color: "text-violet-600 bg-violet-50", href: "/admin" },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map(s => {
+          const Icon = s.icon;
+          const card = (
+            <Card className={`border border-slate-200 ${s.href ? "hover:border-primary/40 hover:shadow-sm cursor-pointer transition-all" : ""}`}>
+              <CardContent className="p-4">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${s.color}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-2xl font-bold">{s.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+              </CardContent>
+            </Card>
+          );
+          return s.href
+            ? <Link key={s.label} href={s.href}>{card}</Link>
+            : <div key={s.label}>{card}</div>;
+        })}
+      </div>
+
+      {/* Alerts feed */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            Recent Integrity Alerts
+          </h2>
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" className="text-xs gap-1">
+              View All <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+
+        {alertsLoading ? (
+          <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
+        ) : unresolvedAlerts.length === 0 ? (
+          <Card className="border border-slate-200">
+            <CardContent className="flex items-center justify-center py-10 text-center">
+              <div>
+                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-2">
+                  <Shield className="h-5 w-5 text-emerald-500" />
+                </div>
+                <p className="text-sm font-medium">All clear</p>
+                <p className="text-xs text-muted-foreground mt-0.5">No unresolved integrity alerts.</p>
               </div>
             </CardContent>
           </Card>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-function TeacherDashboard() {
-  const { data: courses, isLoading: coursesLoading } = useListCourses();
-  
-  if (coursesLoading) {
-    return <Skeleton className="h-64 w-full rounded-xl" />;
-  }
-
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Your Courses</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {courses?.map(course => (
-          <TeacherCourseCard key={course.id} course={course} />
-        ))}
-        {courses?.length === 0 && (
-          <p className="text-muted-foreground col-span-2">You are not teaching any courses.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TeacherCourseCard({ course }: { course: any }) {
-  const { data: dashboard, isLoading } = useGetCourseDashboard(course.id, { query: { enabled: !!course.id } as any });
-
-  return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>{course.title}</CardTitle>
-            <CardDescription>{course.code} • {course.semester}</CardDescription>
-          </div>
-          {dashboard?.pendingGrades ? (
-            <Badge variant="destructive">
-              {dashboard.pendingGrades} Pending Grades
-            </Badge>
-          ) : null}
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1">
-        {isLoading ? (
-          <Skeleton className="h-20 w-full" />
         ) : (
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-muted/50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold">{dashboard?.enrolledStudents || 0}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Students</div>
-            </div>
-            <div className="bg-muted/50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold">{dashboard?.recentAlerts || 0}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Alerts</div>
-            </div>
+          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Student</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">Quiz</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Type</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell">Message</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {unresolvedAlerts.slice(0, 8).map(alert => (
+                  <tr key={alert.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-medium">{alert.studentName ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{alert.quizTitle ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline" className="text-[10px] capitalize">
+                        {(alert.alertType as string).replace(/_/g, " ")}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs hidden lg:table-cell max-w-xs truncate">
+                      {alert.message}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-        <div className="flex gap-2 mt-auto">
-          <Link href={`/courses/${course.id}`} className="flex-1">
-            <div className="w-full text-center bg-primary text-primary-foreground py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-              Go to Course
-            </div>
-          </Link>
-          <Link href={`/courses/${course.id}/grades`} className="flex-1">
-            <div className="w-full text-center border border-input bg-background py-2 rounded-md text-sm font-medium hover:bg-accent transition-colors">
-              Grade Submissions
-            </div>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function AdminDashboard() {
-  const { data: alerts, isLoading: alertsLoading } = useListAlerts();
-  
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Manage Users</div>
-            <Link href="/admin" className="text-xs text-primary hover:underline mt-1 inline-block">Go to Admin Panel</Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Courses</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Manage Courses</div>
-            <Link href="/admin" className="text-xs text-primary hover:underline mt-1 inline-block">Go to Admin Panel</Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">System Alerts</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{alerts?.length || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">Unresolved alerts</p>
-          </CardContent>
-        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Recent Alerts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {alertsLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : alerts && alerts.length > 0 ? (
-            <div className="space-y-4">
-              {alerts.slice(0, 5).map(alert => (
-                <div key={alert.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                  <div>
-                    <div className="font-medium">{alert.studentName} - {alert.quizTitle}</div>
-                    <div className="text-sm text-muted-foreground">{alert.message}</div>
-                  </div>
-                  <Badge variant="outline" className="capitalize">
-                    {alert.alertType.replace('_', ' ')}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">No recent alerts.</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
