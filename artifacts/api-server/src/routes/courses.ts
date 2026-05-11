@@ -1,11 +1,32 @@
 import { Router, type IRouter } from "express";
 import { db, coursesTable, usersTable, enrollmentsTable, quizzesTable, filesTable, modulesTable, alertsTable, attemptsTable } from "@workspace/db";
-import { eq, sql, count } from "drizzle-orm";
+import { eq, sql, count, inArray } from "drizzle-orm";
+import { requireAuth, getRole, courseAccess, isStaff } from "../lib/authz.js";
 
 const router: IRouter = Router();
 
-router.get("/courses", async (_req, res): Promise<void> => {
-  const courses = await db.select({
+router.get("/courses", async (req, res): Promise<void> => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  const role = await getRole(userId);
+
+  // Determine the set of course IDs this user is allowed to see.
+  // - admin: everything
+  // - teacher: courses they own
+  // - student: courses they are enrolled in
+  let allowedIds: number[] | "all" = "all";
+  if (role === "teacher") {
+    const owned = await db.select({ id: coursesTable.id }).from(coursesTable).where(eq(coursesTable.teacherId, userId));
+    allowedIds = owned.map(c => c.id);
+  } else if (role === "student") {
+    const en = await db.select({ courseId: enrollmentsTable.courseId }).from(enrollmentsTable).where(eq(enrollmentsTable.studentId, userId));
+    allowedIds = en.map(e => e.courseId);
+  } else if (role !== "admin") {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
+  if (allowedIds !== "all" && allowedIds.length === 0) { res.json([]); return; }
+
+  const baseQuery = db.select({
     id: coursesTable.id,
     title: coursesTable.title,
     code: coursesTable.code,
@@ -16,11 +37,12 @@ router.get("/courses", async (_req, res): Promise<void> => {
     academicYear: coursesTable.academicYear,
     isActive: coursesTable.isActive,
     createdAt: coursesTable.createdAt,
-  }).from(coursesTable)
-    .leftJoin(usersTable, eq(coursesTable.teacherId, usersTable.id))
-    .orderBy(coursesTable.title);
+  }).from(coursesTable).leftJoin(usersTable, eq(coursesTable.teacherId, usersTable.id));
 
-  // Get enrollment counts
+  const courses = allowedIds === "all"
+    ? await baseQuery.orderBy(coursesTable.title)
+    : await baseQuery.where(inArray(coursesTable.id, allowedIds)).orderBy(coursesTable.title);
+
   const enrollmentCounts = await db.select({
     courseId: enrollmentsTable.courseId,
     count: count(enrollmentsTable.id),
@@ -31,19 +53,27 @@ router.get("/courses", async (_req, res): Promise<void> => {
 });
 
 router.post("/courses", async (req, res): Promise<void> => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  const role = await getRole(userId);
+  if (role !== "admin" && role !== "teacher") { res.status(403).json({ error: "Only teachers and admins can create courses" }); return; }
   const { title, code, description, teacherId, semester, academicYear } = req.body;
   if (!title || !code || !teacherId) {
     res.status(400).json({ error: "Missing required fields" });
     return;
   }
-  const [course] = await db.insert(coursesTable).values({ title, code, description, teacherId, semester, academicYear }).returning();
-  const [teacher] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, teacherId));
+  // Teachers can only create courses they own; admins can assign any teacher.
+  const finalTeacherId = role === "admin" ? teacherId : userId;
+  const [course] = await db.insert(coursesTable).values({ title, code, description, teacherId: finalTeacherId, semester, academicYear }).returning();
+  const [teacher] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, finalTeacherId));
   res.status(201).json({ ...course, teacherName: teacher?.name ?? null, enrollmentCount: 0 });
 });
 
 router.get("/courses/:id", async (req, res): Promise<void> => {
+  const userId = requireAuth(req, res); if (!userId) return;
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
+  const lvl = await courseAccess(userId, id);
+  if (!lvl) { res.status(403).json({ error: "Forbidden" }); return; }
   const [course] = await db.select({
     id: coursesTable.id,
     title: coursesTable.title,
@@ -62,23 +92,36 @@ router.get("/courses/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/courses/:id", async (req, res): Promise<void> => {
+  const userId = requireAuth(req, res); if (!userId) return;
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
+  const lvl = await courseAccess(userId, id);
+  if (!isStaff(lvl)) { res.status(403).json({ error: "Only the course teacher or an admin can edit this course" }); return; }
   const { title, code, description, teacherId, semester, academicYear, isActive } = req.body;
-  const [course] = await db.update(coursesTable).set({ title, code, description, teacherId, semester, academicYear, isActive }).where(eq(coursesTable.id, id)).returning();
+  // Only admin may reassign teacherId.
+  const updates: Record<string, unknown> = { title, code, description, semester, academicYear, isActive };
+  if (lvl === "admin" && teacherId !== undefined) updates.teacherId = teacherId;
+  const [course] = await db.update(coursesTable).set(updates).where(eq(coursesTable.id, id)).returning();
   if (!course) { res.status(404).json({ error: "Not found" }); return; }
   const [teacher] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, course.teacherId));
   res.json({ ...course, teacherName: teacher?.name ?? null, enrollmentCount: 0 });
 });
 
 router.delete("/courses/:id", async (req, res): Promise<void> => {
+  const userId = requireAuth(req, res); if (!userId) return;
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
+  const lvl = await courseAccess(userId, id);
+  if (!isStaff(lvl)) { res.status(403).json({ error: "Only the course teacher or an admin can delete this course" }); return; }
   await db.delete(coursesTable).where(eq(coursesTable.id, id));
   res.sendStatus(204);
 });
 
 router.get("/courses/:id/dashboard", async (req, res): Promise<void> => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  const idCheck = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const lvlCheck = await courseAccess(userId, idCheck);
+  if (!lvlCheck) { res.status(403).json({ error: "Forbidden" }); return; }
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
 

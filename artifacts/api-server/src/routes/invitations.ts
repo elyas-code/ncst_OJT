@@ -2,6 +2,16 @@ import { Router, type IRouter } from "express";
 import { db, courseInvitationsTable, enrollmentsTable, usersTable, coursesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
+import { sendInvitationEmail } from "../lib/email.js";
+import { logger } from "../lib/logger.js";
+
+function inviteLink(req: any, token: string): string {
+  const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  const domains = process.env.REPLIT_DOMAINS?.split(",")[0];
+  const base = domains ? `https://${domains}` : `${proto}://${host}`;
+  return `${base}/invite/${token}`;
+}
 
 const router: IRouter = Router();
 
@@ -46,7 +56,24 @@ router.post("/courses/:courseId/invitations", async (req, res): Promise<void> =>
   const [inv] = await db.insert(courseInvitationsTable).values({
     courseId, email: email.toLowerCase(), token, invitedBy: user.id, expiresAt,
   }).returning();
-  res.status(201).json(await enrich(inv));
+  const enriched = await enrich(inv);
+  // Send invitation email (best-effort — do not fail the request if email sending fails)
+  let emailSent = false;
+  let emailError: string | null = null;
+  try {
+    await sendInvitationEmail({
+      to: inv.email,
+      link: inviteLink(req, token),
+      courseTitle: enriched.courseTitle ?? "your course",
+      courseCode: enriched.courseCode ?? "",
+      inviterName: enriched.inviterName ?? user.name,
+    });
+    emailSent = true;
+  } catch (err: any) {
+    emailError = err?.message ?? String(err);
+    logger.error({ err, email: inv.email, courseId }, "Failed to send invitation email");
+  }
+  res.status(201).json({ ...enriched, emailSent, emailError });
 });
 
 router.delete("/invitations/:id", async (req, res): Promise<void> => {
@@ -80,7 +107,7 @@ router.post("/courses/:courseId/invitations/bulk", async (req, res): Promise<voi
   const { emails } = req.body as { emails: string[] };
   if (!Array.isArray(emails) || emails.length === 0) { res.status(400).json({ error: "emails array required" }); return; }
 
-  const results: Array<{ email: string; success: boolean; error?: string; token?: string }> = [];
+  const results: Array<{ email: string; success: boolean; error?: string; token?: string; emailSent?: boolean }> = [];
 
   for (const rawEmail of emails) {
     const email = rawEmail.trim().toLowerCase();
@@ -94,7 +121,21 @@ router.post("/courses/:courseId/invitations/bulk", async (req, res): Promise<voi
       const token = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await db.insert(courseInvitationsTable).values({ courseId, email, token, invitedBy: user.id, expiresAt });
-      results.push({ email, success: true, token });
+      const [course] = await db.select({ title: coursesTable.title, code: coursesTable.code }).from(coursesTable).where(eq(coursesTable.id, courseId));
+      let emailed = false;
+      try {
+        await sendInvitationEmail({
+          to: email,
+          link: inviteLink(req, token),
+          courseTitle: course?.title ?? "your course",
+          courseCode: course?.code ?? "",
+          inviterName: user.name,
+        });
+        emailed = true;
+      } catch (err) {
+        logger.error({ err, email, courseId }, "Bulk invite email failed");
+      }
+      results.push({ email, success: true, token, emailSent: emailed });
     } catch (err: any) {
       results.push({ email, success: false, error: err?.message ?? "Unknown error" });
     }
