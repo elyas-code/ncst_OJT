@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Layout } from "./components/layout";
+import { AIAssistant } from "./components/ai-assistant";
 import Login from "./pages/login";
 import Landing from "./pages/landing";
 import Dashboard from "./pages/dashboard";
@@ -79,6 +80,7 @@ function ProtectedRoute({ component: Component, roles, ...rest }: { component: R
       <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
         <Component {...rest} />
       </Suspense>
+      <AIAssistant />
     </Layout>
   );
 }
