@@ -9,3 +9,6 @@ export * from "./alerts";
 export * from "./announcements";
 export * from "./file-submissions";
 export * from "./invitations";
+export * from "./assignments";
+export * from "./discussions";
+export * from "./messages";

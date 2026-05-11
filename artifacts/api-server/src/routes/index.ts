@@ -15,6 +15,9 @@ import fileSubmissionsRouter from "./file-submissions";
 import invitationsRouter from "./invitations";
 import aiRouter from "./ai";
 import aiAgentRouter from "./ai-agent";
+import assignmentsRouter from "./assignments";
+import discussionsRouter from "./discussions";
+import messagesRouter from "./messages";
 
 const router: IRouter = Router();
 
@@ -34,5 +37,8 @@ router.use(fileSubmissionsRouter);
 router.use(invitationsRouter);
 router.use(aiRouter);
 router.use(aiAgentRouter);
+router.use(assignmentsRouter);
+router.use(discussionsRouter);
+router.use(messagesRouter);
 
 export default router;

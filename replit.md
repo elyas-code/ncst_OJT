@@ -43,18 +43,29 @@ A full-featured Learning Management System for the Nasser Centre for Science & T
 ## Product
 
 - **Public**: Landing page at `/` visible without login — NCST branding, feature overview, sign-in CTA
-- **Students**: Browse courses, access module files, take lockdown quizzes/exams with tab-switch protection, submit and track OJT/assignment files with status badges
-- **Teachers / Reviewers**: Upload files, build quizzes (Google Forms-style with multiple-choice, T/F, essay, etc.), grade submissions, view grade book with CSV export, proctor live exams with alert monitoring, review student file submissions (approve / reject / request revision with comments)
-- **Admins**: Full user/course CRUD, enroll students in courses, view and resolve integrity alerts
+- **Students**: Browse courses, access module files, take lockdown quizzes/exams with tab-switch protection, submit text/file assignments, view all grades across courses, see upcoming work on dashboard + calendar, post in course discussions, message teachers/peers via inbox
+- **Teachers / Reviewers**: Upload files, build quizzes (Google Forms-style), create assignments + grade submissions with feedback, view grade book with CSV export, proctor live exams with alert monitoring, review student file submissions (approve / reject / request revision), pin/lock discussion threads, message students
+- **Admins**: Full user/course CRUD, enroll students, view and resolve integrity alerts, view any student's grade history
 
-## Login credentials (seed data)
+## Authorization model
 
-- `admin@ncst.edu.bh` / `password123` — Admin
-- `teacher@example.com` / `password123` — Dr. Ahmed Al-Rashid (teacher)
-- `teacher2@example.com` / `password123` — Dr. Sara Mahmood (teacher)
-- `student@example.com` / `password123` — Fatima Al-Zahra (student)
-- `student2@example.com` / `password123` — Mohammed Hassan (student)
-- `student3@example.com` / `password123` — Aisha Al-Mansoori (student)
+All sensitive routes go through `artifacts/api-server/src/lib/authz.ts`:
+- `requireAuth(req,res)` — session check
+- `courseAccess(userId, courseId)` — returns `"admin" | "teacher" | "student" | null` (teacher = owns the course; student = enrolled)
+- `isStaff(level)` — true for admin/teacher
+- Plus `getAssignmentCourseId`, `getDiscussionCourseId`, `getReplyContext`, `getSubmissionContext` for resource → course lookups
+
+Rules enforced: assignments — staff only for create/edit/delete/list-submissions/grade; students see only published; submit requires enrolled student. Discussions — course access required; pin/lock are staff-only; mutate/delete requires author OR staff; replies blocked when locked. `/users/:id/all-grades` — self, admin, or teacher of a course the student is enrolled in.
+
+## Login credentials
+
+- `admin@ncst.edu.bh` / `password123` — Admin (primary)
+- `nv23158@ncst.edu.bh` / `password123` — Admin
+- `deltest@example.com` / `password123` — Teacher
+- `nv23132@ncst.edu.bh` / `password123` — Student (enrolled in cs101)
+- `nv23126@ncst.edu.bh` / `password123` — Student (no enrollments)
+
+Run `pnpm --filter @workspace/scripts run seed` to reset to a fresh richer set.
 
 ## Gotchas
 

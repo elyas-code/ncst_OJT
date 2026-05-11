@@ -9,7 +9,57 @@ import { Link } from "wouter";
 import {
   BookOpen, Users, Bell, AlertTriangle, ChevronRight,
   GraduationCap, FileText, BarChart3, Shield, Clock,
+  Calendar as CalendarIcon, ClipboardList, FileQuestion,
 } from "lucide-react";
+import { useUpcoming } from "../lib/api-extra";
+import { useLocation } from "wouter";
+
+function UpcomingWidget() {
+  const { data, isLoading } = useUpcoming(14);
+  const [, navigate] = useLocation();
+  if (isLoading) return <Skeleton className="h-32 w-full rounded-xl" />;
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <div>
+          <CardTitle className="text-base flex items-center gap-2"><CalendarIcon className="h-4 w-4" />Coming up</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">Due in the next 14 days</p>
+        </div>
+        <Link href="/calendar"><Button variant="ghost" size="sm" className="text-xs">View calendar →</Button></Link>
+      </CardHeader>
+      <CardContent>
+        {!data?.length ? (
+          <p className="text-sm text-muted-foreground text-center py-6">Nothing due. Enjoy the breathing room.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {data.slice(0, 6).map((it: any) => {
+              const d = new Date(it.dueAt);
+              const overdue = d < new Date();
+              const Icon = it.kind === "quiz" ? FileQuestion : ClipboardList;
+              return (
+                <button key={`${it.kind}-${it.id}`}
+                  onClick={() => navigate(it.kind === "quiz" ? `/quiz/${it.id}` : `/assignments/${it.id}`)}
+                  className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/50 text-left transition-colors">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                    ${it.kind === "quiz" ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600"}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{it.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{it.courseCode} &bull; {it.points} pts</p>
+                  </div>
+                  <div className={`text-xs font-semibold flex-shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                    {d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -34,6 +84,8 @@ export default function Dashboard() {
           {user.role}
         </div>
       </div>
+
+      {user.role !== "admin" && <UpcomingWidget />}
 
       {user.role === "student" && <StudentDashboard userId={user.id} />}
       {user.role === "teacher" && <TeacherDashboard userId={user.id} />}

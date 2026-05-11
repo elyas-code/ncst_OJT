@@ -23,6 +23,13 @@ const Admin = lazy(() => import("./pages/admin"));
 const Submissions = lazy(() => import("./pages/submissions"));
 const TeacherPanel = lazy(() => import("./pages/teacher-panel"));
 const Invite = lazy(() => import("./pages/invite"));
+const AssignmentsList = lazy(() => import("./pages/assignments"));
+const AssignmentDetail = lazy(() => import("./pages/assignment-detail"));
+const DiscussionsPage = lazy(() => import("./pages/discussions"));
+const DiscussionDetail = lazy(() => import("./pages/discussions").then(m => ({ default: m.DiscussionDetail })));
+const Calendar = lazy(() => import("./pages/calendar"));
+const Inbox = lazy(() => import("./pages/inbox"));
+const MyGrades = lazy(() => import("./pages/my-grades"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +100,13 @@ function Router() {
       <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/courses" component={() => <ProtectedRoute component={Courses} />} />
       <Route path="/submissions" component={() => <ProtectedRoute component={Submissions} />} />
+      <Route path="/assignments" component={() => <ProtectedRoute component={AssignmentsList} />} />
+      <Route path="/assignments/:id" component={() => <ProtectedRoute component={AssignmentDetail} />} />
+      <Route path="/calendar" component={() => <ProtectedRoute component={Calendar} />} />
+      <Route path="/inbox" component={() => <ProtectedRoute component={Inbox} />} />
+      <Route path="/my-grades" component={() => <ProtectedRoute component={MyGrades} />} />
+      <Route path="/courses/:courseId/discussions/:id" component={() => <ProtectedRoute component={DiscussionDetail} />} />
+      <Route path="/courses/:courseId/discussions" component={() => <ProtectedRoute component={DiscussionsPage} />} />
       <Route path="/courses/:courseId/quiz-builder" component={() => <ProtectedRoute component={QuizBuilder} roles={["teacher", "admin"]} />} />
       <Route path="/courses/:courseId/grades" component={() => <ProtectedRoute component={Grades} roles={["teacher", "admin"]} />} />
       <Route path="/courses/:courseId/proctor" component={() => <ProtectedRoute component={Proctor} roles={["teacher", "admin"]} />} />

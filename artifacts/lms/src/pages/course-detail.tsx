@@ -19,8 +19,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useQueryClient } from "@tanstack/react-query";
 import {
   FileText, ChevronDown, ChevronRight, Plus, Lock, Camera, Mic,
-  Clock, BookOpen, ExternalLink, Trash2, BarChart2, Monitor, File
+  Clock, BookOpen, ExternalLink, Trash2, BarChart2, Monitor, File,
+  MessageSquare,
 } from "lucide-react";
+import { useAssignments, useCreateAssignment, useDeleteAssignment, useDiscussions } from "../lib/api-extra";
 
 function FileIcon({ fileType }: { fileType: string }) {
   const t = fileType?.toLowerCase();
@@ -345,7 +347,9 @@ export default function CourseDetail() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="materials">Materials</TabsTrigger>
+          <TabsTrigger value="assignments">Assignments</TabsTrigger>
           <TabsTrigger value="quizzes">Quizzes & Exams</TabsTrigger>
+          <TabsTrigger value="discussions">Discussions</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -461,7 +465,121 @@ export default function CourseDetail() {
             ))}
           </div>
         </TabsContent>
+
+        <TabsContent value="assignments" className="mt-4">
+          <CourseAssignments courseId={courseId} canManage={isTeacher} />
+        </TabsContent>
+
+        <TabsContent value="discussions" className="mt-4">
+          <CourseDiscussionsTab courseId={courseId} />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function CourseAssignments({ courseId, canManage }: { courseId: number; canManage: boolean }) {
+  const { data, isLoading } = useAssignments(courseId);
+  const createMut = useCreateAssignment(courseId);
+  const delMut = useDeleteAssignment(courseId);
+  const [, navigate] = useLocation();
+  const [open, setOpen] = React.useState(false);
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [instructions, setInstructions] = React.useState("");
+  const [points, setPoints] = React.useState(100);
+  const [dueAt, setDueAt] = React.useState("");
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    createMut.mutate({ title, description, instructions, points, dueAt: dueAt ? new Date(dueAt).toISOString() : null }, {
+      onSuccess: () => { setOpen(false); setTitle(""); setDescription(""); setInstructions(""); setPoints(100); setDueAt(""); }
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Assignments</h2>
+        {canManage && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />New Assignment</Button></DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader><DialogTitle>Create assignment</DialogTitle></DialogHeader>
+              <form onSubmit={submit} className="space-y-3">
+                <div className="space-y-1.5"><Label>Title</Label><Input required value={title} onChange={e => setTitle(e.target.value)} /></div>
+                <div className="space-y-1.5"><Label>Short description</Label><Input value={description} onChange={e => setDescription(e.target.value)} /></div>
+                <div className="space-y-1.5"><Label>Instructions</Label><Textarea rows={4} value={instructions} onChange={e => setInstructions(e.target.value)} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5"><Label>Points</Label><Input type="number" min={0} value={points} onChange={e => setPoints(parseInt(e.target.value) || 0)} /></div>
+                  <div className="space-y-1.5"><Label>Due date</Label><Input type="datetime-local" value={dueAt} onChange={e => setDueAt(e.target.value)} /></div>
+                </div>
+                <DialogFooter><Button type="submit" disabled={createMut.isPending}>{createMut.isPending ? "Creating..." : "Create"}</Button></DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+      {isLoading && [1,2].map(i => <Skeleton key={i} className="h-20 w-full" />)}
+      {!isLoading && !data?.length && (
+        <Card><CardContent className="py-10 text-center text-muted-foreground">No assignments yet.</CardContent></Card>
+      )}
+      <div className="space-y-2">
+        {data?.map((a: any) => (
+          <Card key={a.id} className="hover:border-primary/30 cursor-pointer transition-colors" onClick={() => navigate(`/assignments/${a.id}`)}>
+            <CardContent className="py-4 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-semibold text-sm">{a.title}</span>
+                  {!a.isPublished && <Badge variant="outline" className="text-xs">Draft</Badge>}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {a.dueAt && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Due {new Date(a.dueAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+                  <span>{a.points} pts</span>
+                  {a.submissionCount != null && <span>&bull; {a.submissionCount} submission{a.submissionCount === 1 ? "" : "s"}</span>}
+                </div>
+              </div>
+              {canManage && (
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete assignment?")) delMut.mutate(a.id); }}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CourseDiscussionsTab({ courseId }: { courseId: number }) {
+  const { data, isLoading } = useDiscussions(courseId);
+  const [, navigate] = useLocation();
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Discussions</h2>
+        <Button size="sm" variant="outline" onClick={() => navigate(`/courses/${courseId}/discussions`)}>
+          Open full forum →
+        </Button>
+      </div>
+      {isLoading && [1,2].map(i => <Skeleton key={i} className="h-20 w-full" />)}
+      {!isLoading && !data?.length && (
+        <Card><CardContent className="py-10 text-center text-muted-foreground">No discussion threads yet.</CardContent></Card>
+      )}
+      <div className="space-y-2">
+        {data?.slice(0, 6).map((d: any) => (
+          <Card key={d.id} className="hover:border-primary/30 cursor-pointer transition-colors" onClick={() => navigate(`/courses/${courseId}/discussions/${d.id}`)}>
+            <CardContent className="py-3 flex items-center gap-3">
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{d.title}</p>
+                <p className="text-xs text-muted-foreground">{d.authorName} &bull; {d.replyCount} repl{d.replyCount === 1 ? "y" : "ies"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

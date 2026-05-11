@@ -5,7 +5,9 @@ import { useLogout } from "@workspace/api-client-react";
 import {
   Settings, Users, LogOut, Bell,
   Upload, LayoutDashboard, GraduationCap, BookOpen, Search,
+  ClipboardList, Calendar as CalendarIcon, Inbox as InboxIcon, Award,
 } from "lucide-react";
+import { useUnreadCount } from "../lib/api-extra";
 import { Button } from "./ui/button";
 
 interface NavItem {
@@ -20,13 +22,23 @@ const navGroups: { label?: string; items: NavItem[] }[] = [
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["student", "teacher", "admin"] },
       { label: "Courses", href: "/courses", icon: BookOpen, roles: ["student", "teacher", "admin"] },
-      { label: "Submissions", href: "/submissions", icon: Upload, roles: ["student", "teacher", "admin"] },
+      { label: "Calendar", href: "/calendar", icon: CalendarIcon, roles: ["student", "teacher", "admin"] },
+      { label: "Assignments", href: "/assignments", icon: ClipboardList, roles: ["student", "teacher", "admin"] },
+      { label: "Inbox", href: "/inbox", icon: InboxIcon, roles: ["student", "teacher", "admin"] },
+    ],
+  },
+  {
+    label: "Student",
+    items: [
+      { label: "My Grades", href: "/my-grades", icon: Award, roles: ["student"] },
+      { label: "Submissions", href: "/submissions", icon: Upload, roles: ["student"] },
     ],
   },
   {
     label: "Teaching",
     items: [
       { label: "My Panel", href: "/teacher", icon: GraduationCap, roles: ["teacher", "admin"] },
+      { label: "Review Files", href: "/submissions", icon: Upload, roles: ["teacher", "admin"] },
     ],
   },
   {
@@ -53,6 +65,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, setUser } = useAuth();
   const [location] = useLocation();
   const logoutMutation = useLogout();
+  const { data: unread } = useUnreadCount();
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, { onSuccess: () => setUser(null) });
@@ -106,6 +119,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 {visibleItems.map(item => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
+                  const showBadge = item.href === "/inbox" && (unread?.count ?? 0) > 0;
                   return (
                     <Link
                       key={item.href}
@@ -118,7 +132,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     >
                       {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-sidebar-primary" />}
                       <Icon className={`h-4 w-4 flex-shrink-0 transition-colors ${active ? "text-sidebar-primary" : ""}`} />
-                      {item.label}
+                      <span className="flex-1">{item.label}</span>
+                      {showBadge && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {unread!.count}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
