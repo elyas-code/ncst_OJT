@@ -31,8 +31,8 @@ router.post("/users", async (req, res): Promise<void> => {
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-  const [user] = await db.insert(usersTable).values({ name, email, passwordHash, role, studentId, department }).returning();
+  const passwordHash = await bcrypt.hash(String(password).toLowerCase(), 10);
+  const [user] = await db.insert(usersTable).values({ name, email: String(email).toLowerCase().trim(), passwordHash, role, studentId, department }).returning();
   res.status(201).json(toUser(user));
 });
 
@@ -120,7 +120,7 @@ router.post("/users/bulk", async (req, res): Promise<void> => {
       continue;
     }
     try {
-      const passwordHash = await bcrypt.hash(u.password, 10);
+      const passwordHash = await bcrypt.hash(String(u.password).toLowerCase(), 10);
       const [created] = await db.insert(usersTable).values({
         name: u.name, email: u.email.toLowerCase(), passwordHash, role: u.role as any,
         studentId: u.studentId ?? null, department: u.department ?? null,

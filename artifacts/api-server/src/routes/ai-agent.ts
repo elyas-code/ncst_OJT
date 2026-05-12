@@ -447,7 +447,7 @@ const toolHandlers: Record<string, (caller: Caller, args: any) => Promise<any>> 
     if (caller.role !== "admin") return { error: "Admin only" };
     if (!args.email || !args.password || !args.name || !args.role) return { error: "Missing required fields" };
     try {
-      const passwordHash = await bcrypt.hash(String(args.password), 10);
+      const passwordHash = await bcrypt.hash(String(args.password).toLowerCase(), 10);
       const [u] = await db.insert(usersTable).values({
         name: String(args.name), email: String(args.email).toLowerCase(),
         passwordHash, role: args.role,
