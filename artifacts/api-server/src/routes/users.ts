@@ -45,10 +45,27 @@ router.get("/users/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/users/:id", async (req, res): Promise<void> => {
+  const callerId = (req.session as any)?.userId;
+  if (!callerId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
-  const { name, email, role, studentId, department, avatarUrl } = req.body;
-  const [user] = await db.update(usersTable).set({ name, email, role, studentId, department, avatarUrl }).where(eq(usersTable.id, id)).returning();
+  if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const [caller] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, callerId));
+  if (!caller) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const isAdmin = caller.role === "admin";
+  if (id !== callerId && !isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { name, email, role, studentId, department, avatarUrl } = req.body ?? {};
+  const updates: Record<string, unknown> = {};
+  if (typeof name === "string" && name.trim()) updates.name = name.trim();
+  if (typeof department === "string") updates.department = department.trim() || null;
+  if (typeof avatarUrl === "string") updates.avatarUrl = avatarUrl;
+  if (isAdmin) {
+    if (typeof email === "string" && email.trim()) updates.email = email.toLowerCase().trim();
+    if (typeof role === "string") updates.role = role as any;
+    if (typeof studentId === "string") updates.studentId = studentId.trim() || null;
+  }
+  if (Object.keys(updates).length === 0) { res.status(400).json({ error: "No valid fields to update" }); return; }
+  const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
   if (!user) { res.status(404).json({ error: "Not found" }); return; }
   res.json(toUser(user));
 });

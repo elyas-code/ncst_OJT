@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useUpdateUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,15 +10,38 @@ import { Badge } from "@/components/ui/badge";
 import { User as UserIcon, Mail, Building, Hash } from "lucide-react";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { toast } = useToast();
+  const updateUser = useUpdateUser();
+  const [name, setName] = useState("");
+  const [department, setDepartment] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setDepartment(user.department || "");
+    }
+  }, [user]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Profile updated",
-      description: "Your profile changes have been saved successfully.",
-    });
+    if (!user) return;
+    if (!name.trim()) {
+      toast({ title: "Name is required", variant: "destructive" });
+      return;
+    }
+    updateUser.mutate(
+      { id: user.id, data: { name: name.trim(), department: department.trim() } as any },
+      {
+        onSuccess: (updated: any) => {
+          setUser(updated);
+          toast({ title: "Profile updated", description: "Your changes have been saved." });
+        },
+        onError: (err: any) => {
+          toast({ title: "Could not save", description: err?.message ?? "Please try again.", variant: "destructive" });
+        },
+      },
+    );
   };
 
   if (!user) return null;
@@ -56,7 +80,7 @@ export default function Settings() {
                     <UserIcon className="w-4 h-4 text-muted-foreground" />
                     Full Name
                   </Label>
-                  <Input id="name" defaultValue={user.name} />
+                  <Input id="name" value={name} onChange={e => setName(e.target.value)} />
                 </div>
                 
                 <div className="space-y-2">
@@ -81,12 +105,12 @@ export default function Settings() {
                     <Building className="w-4 h-4 text-muted-foreground" />
                     Department / Major
                   </Label>
-                  <Input id="department" defaultValue={user.department || ''} />
+                  <Input id="department" value={department} onChange={e => setDepartment(e.target.value)} />
                 </div>
               </div>
 
               <div className="flex justify-end pt-4 border-t">
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit" disabled={updateUser.isPending}>{updateUser.isPending ? "Saving…" : "Save Changes"}</Button>
               </div>
             </form>
           </CardContent>

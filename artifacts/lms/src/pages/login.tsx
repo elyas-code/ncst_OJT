@@ -5,16 +5,26 @@ import { useLocation, useSearch } from "wouter";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { GraduationCap, ShieldCheck, Sparkles, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import { GraduationCap, ShieldCheck, Sparkles, ArrowRight, Mail } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
   const loginMutation = useLogin();
   const { setUser } = useAuth();
   const [, setLocation] = useLocation();
   const search = useSearch();
   const redirectTo = new URLSearchParams(search).get("redirect") ?? "/dashboard";
+
+  const openForgot = () => { setForgotEmail(email); setForgotSent(false); setForgotOpen(true); };
+  const submitForgot = (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotSent(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +133,7 @@ export default function Login() {
                 <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Password
                 </Label>
-                <a href="#" className="text-xs font-semibold text-primary hover:underline">Forgot?</a>
+                <button type="button" onClick={openForgot} className="text-xs font-semibold text-primary hover:underline">Forgot?</button>
               </div>
               <Input
                 id="password"
@@ -177,6 +187,59 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset your password</DialogTitle>
+            <DialogDescription>
+              Enter your institutional email and IT will send you a reset link.
+            </DialogDescription>
+          </DialogHeader>
+          {forgotSent ? (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-3 rounded-md bg-primary/5 border border-primary/20">
+                <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium">Request received</p>
+                  <p className="text-muted-foreground mt-1">
+                    If <strong>{forgotEmail}</strong> matches a registered account, a password
+                    reset link will be sent shortly. If you don't receive it within a few
+                    minutes, please email{" "}
+                    <a href="mailto:support@ncst.edu.bh" className="text-primary underline">
+                      support@ncst.edu.bh
+                    </a>
+                    .
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setForgotOpen(false)}>Close</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={submitForgot} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email">Email address</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="you@ncst.edu.bh"
+                  required
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setForgotOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Send reset link</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
