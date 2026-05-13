@@ -59,12 +59,14 @@ const roleColors: Record<string, string> = {
 function SidebarContent({
   userRole,
   userName,
+  userEmail,
   location,
   onLogout,
   onNavigate,
 }: {
   userRole: string;
   userName: string;
+  userEmail: string;
   location: string;
   onLogout: () => void;
   onNavigate?: () => void;
@@ -137,7 +139,8 @@ function SidebarContent({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold leading-none truncate text-white">{userName}</p>
-            <span className={`inline-block mt-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${roleColors[userRole] ?? ""}`}>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate mt-0.5">{userEmail}</p>
+            <span className={`inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${roleColors[userRole] ?? ""}`}>
               {userRole}
             </span>
           </div>
@@ -184,6 +187,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <SidebarContent
           userRole={user.role}
           userName={user.name}
+          userEmail={user.email}
           location={location}
           onLogout={handleLogout}
         />
@@ -212,6 +216,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 <SidebarContent
                   userRole={user.role}
                   userName={user.name}
+                  userEmail={user.email}
                   location={location}
                   onLogout={handleLogout}
                   onNavigate={() => setMobileOpen(false)}
