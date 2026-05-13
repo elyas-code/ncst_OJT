@@ -165,14 +165,16 @@ export default function Login() {
             <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground/80 mb-3 text-center">
               Demo accounts
             </p>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {[
-                { label: "Admin — admin@ncst.edu.bh", email: "admin@ncst.edu.bh" },
+                { label: "Admin", email: "nv23158@ncst.edu.bh" },
+                { label: "Student", email: "nv23126@ncst.edu.bh" },
+                { label: "Teacher", email: "nv23132@ncst.edu.bh" },
               ].map(d => (
                 <button
                   key={d.label}
                   type="button"
-                  onClick={() => { setEmail(d.email); setPassword("password123"); }}
+                  onClick={() => { setEmail(d.email); setPassword("NCST@1234"); }}
                   className="text-xs font-medium border border-border rounded-md py-2 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
                 >
                   {d.label}
