@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   useListCourses,
   useCreateCourse,
+  useDeleteCourse,
   useListCourseInvitations,
   useCreateCourseInvitation,
   useCancelInvitation,
@@ -31,7 +32,11 @@ export default function TeacherPanel() {
   const [managingCourseId, setManagingCourseId] = useState<number | null>(null);
 
   const { data: allCourses, isLoading, refetch: refetchCourses } = useListCourses({ query: { enabled: !!user } as any });
-  const myCourses = allCourses?.filter(c => c.teacherId === user?.id) ?? [];
+  const isAdmin = user?.role === "admin";
+  // Admins see all courses; teachers see only their own
+  const myCourses = isAdmin
+    ? (allCourses ?? [])
+    : (allCourses?.filter(c => c.teacherId === user?.id) ?? []);
 
   if (!user || (user.role !== "teacher" && user.role !== "admin")) return null;
 
@@ -97,6 +102,7 @@ export default function TeacherPanel() {
               course={course}
               isManaging={managingCourseId === course.id}
               onManage={() => setManagingCourseId(managingCourseId === course.id ? null : course.id)}
+              onDeleted={refetchCourses}
             />
           ))}
         </div>
@@ -121,8 +127,24 @@ export default function TeacherPanel() {
   );
 }
 
-function CourseRow({ course, isManaging, onManage }: { course: any; isManaging: boolean; onManage: () => void }) {
+function CourseRow({ course, isManaging, onManage, onDeleted }: {
+  course: any;
+  isManaging: boolean;
+  onManage: () => void;
+  onDeleted: () => void;
+}) {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const deleteCourse = useDeleteCourse();
+
+  const handleDelete = () => {
+    if (!confirm(`Delete "${course.title}"? This will remove all submission slots, submissions and invitations for this course. This cannot be undone.`)) return;
+    deleteCourse.mutate({ id: course.id }, {
+      onSuccess: () => { toast({ title: "Course deleted" }); onDeleted(); },
+      onError: () => toast({ title: "Failed to delete course", variant: "destructive" }),
+    });
+  };
+
   return (
     <Card className="border border-border hover:border-primary/30 transition-colors">
       <CardContent className="p-4">
@@ -141,6 +163,7 @@ function CourseRow({ course, isManaging, onManage }: { course: any; isManaging: 
             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {course.enrollmentCount ?? 0} students</span>
               {course.semester && <span>{course.semester} {course.academicYear}</span>}
+              {course.teacherName && <span>· {course.teacherName}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -150,6 +173,16 @@ function CourseRow({ course, isManaging, onManage }: { course: any; isManaging: 
             <Button variant="outline" size="sm" onClick={onManage} className="gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Manage Invitations
               <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isManaging ? "rotate-90" : ""}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleteCourse.isPending}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              title="Delete course"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
