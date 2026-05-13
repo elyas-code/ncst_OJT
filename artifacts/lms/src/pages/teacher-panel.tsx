@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import {
-  Plus, BookOpen, Users, Mail, Copy, Check, X, Clock, ChevronRight,
+  Plus, BookOpen, Users, Mail, Check, Clock, ChevronRight,
   GraduationCap, Send, Trash2, ExternalLink, Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -193,7 +193,6 @@ function CourseRow({ course, isManaging, onManage, onDeleted }: {
 
 function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => void }) {
   const [email, setEmail] = useState("");
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [showBulkInvite, setShowBulkInvite] = useState(false);
   const { toast } = useToast();
 
@@ -201,24 +200,13 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
   const createInvitation = useCreateCourseInvitation();
   const cancelInvitation = useCancelInvitation();
 
-  const getInviteLink = (token: string) => `${window.location.origin}/invite/${token}`;
-
-  const handleCopyLink = (token: string, id: number) => {
-    navigator.clipboard.writeText(getInviteLink(token)).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  };
-
   const handleInvite = () => {
     if (!email.trim()) return;
     createInvitation.mutate({ courseId: course.id, data: { email: email.trim().toLowerCase() } }, {
-      onSuccess: (inv) => {
+      onSuccess: () => {
         refetch();
         setEmail("");
-        // Auto-copy the link
-        navigator.clipboard.writeText(getInviteLink(inv.token)).catch(() => {});
-        toast({ title: "Invitation created", description: "Link copied to clipboard — share it with the student." });
+        toast({ title: "Invitation sent", description: `An email with the invitation link has been sent to ${email.trim().toLowerCase()}.` });
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.error ?? "Could not send invitation.";
@@ -274,7 +262,7 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
             <CardContent className="p-4 space-y-3">
               <p className="text-sm font-medium">Invite a student by email</p>
               <p className="text-xs text-muted-foreground">
-                Enter the student's email address. An invitation link will be generated — copy and share it with the student. When they click the link and sign in, they'll be automatically enrolled.
+                Enter the student's email address and click Send. They'll receive an email with a secure link — when they click it and sign in, they're automatically enrolled.
               </p>
               <div className="flex gap-2">
                 <Input
@@ -287,7 +275,7 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
                 />
                 <Button onClick={handleInvite} disabled={!email.trim() || createInvitation.isPending} className="gap-2">
                   <Send className="h-4 w-4" />
-                  {createInvitation.isPending ? "Sending…" : "Generate Link"}
+                  {createInvitation.isPending ? "Sending…" : "Send Invitation"}
                 </Button>
               </div>
             </CardContent>
@@ -310,14 +298,6 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
                     <Badge variant="secondary" className="flex-shrink-0 gap-1">
                       <Clock className="h-3 w-3" /> Pending
                     </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-shrink-0 gap-1.5"
-                      onClick={() => handleCopyLink(inv.token, inv.id)}
-                    >
-                      {copiedId === inv.id ? <><Check className="h-3.5 w-3.5 text-emerald-600" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy Link</>}
-                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

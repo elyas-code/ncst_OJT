@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Loader2, Mail, Sparkles, RotateCcw, Copy, Check } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Mail, Sparkles, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface BulkInviteResult {
@@ -46,7 +46,6 @@ export default function BulkInvite({ courses, defaultCourseId, onClose }: Props)
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<BulkInviteResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copiedAll, setCopiedAll] = useState(false);
   const { toast } = useToast();
 
   const handleParse = () => {
@@ -77,18 +76,6 @@ export default function BulkInvite({ courses, defaultCourseId, onClose }: Props)
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCopyAllLinks = () => {
-    if (!result) return;
-    const links = result.results
-      .filter(r => r.success && r.token)
-      .map(r => `${r.email}: ${window.location.origin}/invite/${r.token}`)
-      .join("\n");
-    navigator.clipboard.writeText(links).then(() => {
-      setCopiedAll(true);
-      setTimeout(() => setCopiedAll(false), 2000);
-    });
   };
 
   const reset = () => { setStep("input"); setRaw(""); setEmails([]); setResult(null); setError(null); };
@@ -200,19 +187,11 @@ export default function BulkInvite({ courses, defaultCourseId, onClose }: Props)
             </p>
           </div>
 
-          <div className="rounded-lg border bg-slate-50 p-3 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Next step: share the invite links with students</p>
+          <div className="rounded-lg border bg-slate-50 p-3 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Invitation emails sent</p>
             <p className="text-xs text-muted-foreground">
-              Each student gets a unique link. When they click it and sign in with their NCST email, they're automatically enrolled in the course.
+              Each student has been emailed a unique invitation link. When they click it and sign in, they're automatically enrolled in the course.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-2 mt-2"
-              onClick={handleCopyAllLinks}
-            >
-              {copiedAll ? <><Check className="h-3.5 w-3.5 text-emerald-600" /> All Links Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy All Invite Links</>}
-            </Button>
           </div>
 
           {result.failed > 0 && (
