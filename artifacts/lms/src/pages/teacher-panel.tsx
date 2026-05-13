@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import {
@@ -223,6 +223,7 @@ function ManageCourseDialog({ course, onClose }: { course: any; onClose: () => v
               <Sparkles className="h-3.5 w-3.5" /> Bulk Invite
             </Button>
           </div>
+          <DialogDescription>Invite students to join this course by email or bulk upload.</DialogDescription>
         </DialogHeader>
 
         {showBulkInvite ? (
@@ -365,7 +366,7 @@ function CreateCourseDialog({ open, onClose, onCreated, teacherId }: {
       data: { ...form, teacherId: parseInt(form.teacherId) }
     } as any, {
       onSuccess: () => { toast({ title: "Course created" }); onCreated(); },
-      onError: () => toast({ title: "Failed to create course", variant: "destructive" }),
+      onError: (err: any) => toast({ title: "Failed to create course", description: err?.response?.data?.error ?? err?.message ?? "Server error", variant: "destructive" }),
     });
   };
 
@@ -376,6 +377,7 @@ function CreateCourseDialog({ open, onClose, onCreated, teacherId }: {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Create New Course</DialogTitle>
+          <DialogDescription>Fill in the details below to create a new course.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="space-y-1.5">

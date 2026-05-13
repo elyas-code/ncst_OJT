@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Users, BookOpen, GraduationCap, Sparkles } from "lucide-react";
@@ -44,7 +44,7 @@ function AddUserDialog() {
         <Button size="sm" data-testid="add-user-btn"><Plus className="h-4 w-4 mr-1" />Add User</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>New User</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>New User</DialogTitle><DialogDescription>Create a new user account.</DialogDescription></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Name</Label><Input required value={form.name} onChange={f("name")} /></div>
@@ -95,7 +95,7 @@ function AddCourseDialog({ teachers }: { teachers: any[] }) {
         <Button size="sm"><Plus className="h-4 w-4 mr-1" />Add Course</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>New Course</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>New Course</DialogTitle><DialogDescription>Create a new course and assign it to a teacher.</DialogDescription></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1 col-span-2"><Label>Title</Label><Input required value={form.title} onChange={f("title")} /></div>
