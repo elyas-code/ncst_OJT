@@ -19,8 +19,7 @@ function createTransporter() {
     host,
     port,
     secure: false, // STARTTLS on port 587
-    auth: { user, pass },
-    tls: { ciphers: "SSLv3" },
+    auth: { user, pass: pass.replace(/\s/g, "") }, // strip spaces from Gmail app passwords
   });
 }
 
