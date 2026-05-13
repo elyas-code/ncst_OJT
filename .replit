@@ -33,3 +33,11 @@ externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+SMTP_HOST = "smtp.office365.com"
+SMTP_PORT = "587"
+SMTP_USER = "NV23158@NCST.EDU.BH"
+SMTP_FROM = "NV23158@NCST.EDU.BH"
