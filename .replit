@@ -37,7 +37,7 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-SMTP_HOST = "smtp.office365.com"
+SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = "587"
-SMTP_USER = "NV23158@NCST.EDU.BH"
-SMTP_FROM = "NV23158@NCST.EDU.BH"
+SMTP_USER = "mohammednv23158@gmail.com"
+SMTP_FROM = "mohammednv23158@gmail.com"
