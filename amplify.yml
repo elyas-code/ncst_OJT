@@ -1,0 +1,44 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - corepack enable
+        - corepack prepare pnpm@latest --activate
+        - export PATH="$HOME/.local/share/pnpm:$PATH"
+        # --allow-build lets bcrypt and esbuild compile their native binaries
+        - pnpm install --frozen-lockfile --allow-build=bcrypt,esbuild
+        # Build the shared libs that the lms package depends on
+        - pnpm run typecheck:libs
+    build:
+      commands:
+        - pnpm --filter @workspace/lms run build
+  artifacts:
+    # Vite is configured to output here (see artifacts/lms/vite.config.ts)
+    baseDirectory: artifacts/lms/dist/public
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - artifacts/lms/node_modules/**/*
+      - lib/*/node_modules/**/*
+
+custom_headers:
+  - pattern: '**/*'
+    headers:
+      - key: Cache-Control
+        value: no-cache
+
+redirects:
+  # Proxy /api/* to the Render API server
+  # Set RENDER_API_URL in Amplify Console → Environment Variables
+  # e.g. https://ojt-kdd3.onrender.com
+  - source: /api/<proxy+>
+    target: '#{RENDER_API_URL}/api/<proxy+>'
+    status: '200'
+
+  # SPA fallback — send every unmatched path to index.html
+  - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json)$)([^.]+$)/>'
+    target: /index.html
+    status: '200'

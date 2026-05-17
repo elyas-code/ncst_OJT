@@ -1,0 +1,151 @@
+22
+
+2026-05-16T20:54:59.167Z [WARNING]: !Failed to set up process.env.secrets
+
+23
+
+2026-05-16T20:55:00.078Z [INFO]: # No package override configuration found.
+
+24
+
+2026-05-16T20:55:00.081Z [INFO]: # Retrieving cache...
+
+25
+
+2026-05-16T20:55:00.142Z [INFO]: # Retrieved cache
+
+26
+
+2026-05-16T20:55:03.590Z [INFO]: ## Starting Backend Build
+
+27
+
+                                 ## Checking for associated backend environment...
+
+28
+
+                                 ## No backend environment association found, continuing...
+
+29
+
+                                 ## Completed Backend Build
+
+30
+
+2026-05-16T20:55:03.596Z [INFO]: {"backendDuration": 0}
+
+31
+
+                                 ## Starting Frontend Build
+
+32
+
+                                 # Starting phase: preBuild
+
+33
+
+                                 # Executing command: corepack enable
+
+34
+
+2026-05-16T20:55:04.731Z [INFO]: # Executing command: corepack prepare pnpm@latest --activate
+
+35
+
+2026-05-16T20:55:05.179Z [INFO]: Preparing pnpm@latest for immediate activation...
+
+36
+
+2026-05-16T20:55:05.504Z [INFO]: # Executing command: export PATH="$HOME/.local/share/pnpm:$PATH"
+
+37
+
+2026-05-16T20:55:05.505Z [INFO]: # Executing command: pnpm --version
+
+38
+
+2026-05-16T20:55:06.441Z [INFO]: 11.1.2
+
+39
+
+2026-05-16T20:55:06.456Z [INFO]: # Executing command: pnpm install --frozen-lockfile
+
+40
+
+2026-05-16T20:55:06.960Z [INFO]: Scope: all 9 workspace projects
+
+41
+
+2026-05-16T20:55:07.110Z [INFO]: Lockfile is up to date, resolution step is skipped
+
+42
+
+2026-05-16T20:55:07.155Z [INFO]: Progress: resolved 1, reused 0, downloaded 0, added 0
+
+43
+
+2026-05-16T20:55:07.243Z [INFO]: Packages: +504
+
+44
+
+                                 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+45
+
+2026-05-16T20:55:08.158Z [INFO]: Progress: resolved 504, reused 0, downloaded 141, added 70
+
+46
+
+2026-05-16T20:55:09.158Z [INFO]: Progress: resolved 504, reused 0, downloaded 309, added 252
+
+47
+
+2026-05-16T20:55:10.161Z [INFO]: Progress: resolved 504, reused 0, downloaded 467, added 337
+
+48
+
+2026-05-16T20:55:10.566Z [INFO]: Progress: resolved 504, reused 0, downloaded 504, added 504, done
+
+49
+
+2026-05-16T20:55:12.186Z [INFO]: devDependencies:
+
+50
+
+                                 + prettier 3.8.1
+
+51
+
+                                 + typescript 5.9.3
+
+52
+
+2026-05-16T20:55:12.222Z [INFO]: . preinstall$ rm -f package-lock.json yarn.lock
+
+53
+
+2026-05-16T20:55:12.257Z [INFO]: . preinstall: Done
+
+54
+
+2026-05-16T20:55:12.341Z [INFO]: [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: bcrypt@6.0.0, esbuild@0.27.3
+
+55
+
+                                 Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+
+56
+
+2026-05-16T20:55:12.420Z [ERROR]: !!! Build failed
+
+57
+
+2026-05-16T20:55:12.420Z [ERROR]: !!! Error: Command failed with exit code 1
+
+58
+
+2026-05-16T20:55:12.420Z [INFO]: # Starting environment caching...
+
+59
+
+2026-05-16T20:55:12.420Z [INFO]: # Environment caching completed
