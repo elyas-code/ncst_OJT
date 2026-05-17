@@ -1,0 +1,157 @@
+2026-05-17T07:31:22.744Z [INFO]: # Build environment configured with Standard build compute type: 8GiB Memory, 4vCPUs, 128GB Disk Space
+
+1
+
+2026-05-17T07:31:23.124Z [INFO]: # Cloning repository: git@github.com:elyas-code/ncst_OJT.git
+
+2
+
+2026-05-17T07:31:23.601Z [INFO]: 
+
+3
+
+2026-05-17T07:31:23.601Z [INFO]: Cloning into 'ncst_OJT'...
+
+4
+
+2026-05-17T07:31:23.602Z [INFO]: # Switching to commit: ca137a6325e091d0a856b641d84f2096b6710145
+
+5
+
+2026-05-17T07:31:23.618Z [INFO]: Note: switching to 'ca137a6325e091d0a856b641d84f2096b6710145'.
+
+6
+
+                                 You are in 'detached HEAD' state. You can look around, make experimental
+
+7
+
+                                 changes and commit them, and you can discard any commits you make in this
+
+8
+
+                                 state without impacting any branches by switching back to a branch.
+
+9
+
+                                 If you want to create a new branch to retain commits you create, you may
+
+10
+
+                                 do so (now or later) by using -c with the switch command. Example:
+
+11
+
+                                 git switch -c <new-branch-name>
+
+12
+
+                                 Or undo this operation with:
+
+13
+
+                                 git switch -
+
+14
+
+                                 Turn off this advice by setting config variable advice.detachedHead to false
+
+15
+
+                                 HEAD is now at ca137a6 Update build process to use compatible Node.js package manager version
+
+16
+
+2026-05-17T07:31:23.694Z [INFO]: Successfully cleaned up Git credentials
+
+17
+
+2026-05-17T07:31:23.694Z [INFO]: # Checking for Git submodules at: /codebuild/output/src2413387919/src/ncst_OJT/.gitmodules
+
+18
+
+2026-05-17T07:31:23.701Z [INFO]: # Retrieving environment cache...
+
+19
+
+2026-05-17T07:31:23.744Z [WARNING]: ! Unable to write cache: {"code":"ERR_BAD_REQUEST","message":"Request failed with status code 404"})}
+
+20
+
+2026-05-17T07:31:23.744Z [INFO]: ---- Setting Up SSM Secrets ----
+
+21
+
+2026-05-17T07:31:23.744Z [INFO]: SSM params {"Path":"/amplify/dbgtpcdl2pdt3/main/","WithDecryption":true}
+
+22
+
+2026-05-17T07:31:23.786Z [WARNING]: !Failed to set up process.env.secrets
+
+23
+
+2026-05-17T07:31:24.588Z [INFO]: # No package override configuration found.
+
+24
+
+2026-05-17T07:31:24.592Z [INFO]: # Retrieving cache...
+
+25
+
+2026-05-17T07:31:24.645Z [INFO]: # Retrieved cache
+
+26
+
+2026-05-17T07:31:29.123Z [INFO]: ## Starting Backend Build
+
+27
+
+                                 ## Checking for associated backend environment...
+
+28
+
+                                 ## No backend environment association found, continuing...
+
+29
+
+                                 ## Completed Backend Build
+
+30
+
+2026-05-17T07:31:29.129Z [INFO]: {"backendDuration": 0}
+
+31
+
+                                 ## Starting Frontend Build
+
+32
+
+                                 # Starting phase: preBuild
+
+33
+
+                                 # Executing command: corepack enable
+
+34
+
+2026-05-17T07:31:30.832Z [INFO]: # Executing command: corepack prepare pnpm@9 --activate
+
+35
+
+2026-05-17T07:31:31.416Z [INFO]: Preparing pnpm@9 for immediate activation...
+
+36
+
+2026-05-17T07:31:31.824Z [INFO]: # Executing command: export PATH="$HOME/.local/share/pnpm:$PATH"
+
+37
+
+2026-05-17T07:31:31.825Z [INFO]: # Executing command: pnpm install --frozen-lockfile
+
+38
+
+2026-05-17T07:31:32.657Z [INFO]: Scope: all 9 workspace projects
+
+39
+
+2026-05-17T07:31:32.726Z [INFO]: ERR_PNPM_LOCKFILE_CONFIG_MISMATCH  Cannot proceed with the frozen installation. The current "overrides" configuration doesn't match the value found in the lockfile

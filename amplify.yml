@@ -4,12 +4,12 @@ frontend:
     preBuild:
       commands:
         - corepack enable
-        # Pin to pnpm 9 — the lockfile is v9.0 format and pnpm 9 correctly
-        # honours onlyBuiltDependencies in pnpm-workspace.yaml (bcrypt, esbuild)
-        - corepack prepare pnpm@9 --activate
-        - export PATH="$HOME/.local/share/pnpm:$PATH"
-        - pnpm install --frozen-lockfile
-        # Build the shared libs that the lms package depends on
+        # pnpm 10 matches what Replit uses to generate the lockfile.
+        # --no-frozen-lockfile lets pnpm reconcile workspace config (minimumReleaseAge,
+        # onlyBuiltDependencies) without hitting ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.
+        - corepack prepare pnpm@10 --activate
+        - pnpm install --no-frozen-lockfile
+        # Build the shared libs (db types, api-client) the lms package depends on
         - pnpm run typecheck:libs
     build:
       commands:
@@ -32,7 +32,7 @@ custom_headers:
         value: no-cache
 
 redirects:
-  # Proxy /api/* to the Render API server
+  # Proxy /api/* to the Render API server.
   # Set RENDER_API_URL in Amplify Console → Environment Variables
   # e.g. https://ojt-kdd3.onrender.com
   - source: /api/<proxy+>
