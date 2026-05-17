@@ -4,10 +4,11 @@ frontend:
     preBuild:
       commands:
         - corepack enable
-        - corepack prepare pnpm@latest --activate
+        # Pin to pnpm 9 — the lockfile is v9.0 format and pnpm 9 correctly
+        # honours onlyBuiltDependencies in pnpm-workspace.yaml (bcrypt, esbuild)
+        - corepack prepare pnpm@9 --activate
         - export PATH="$HOME/.local/share/pnpm:$PATH"
-        # --allow-build lets bcrypt and esbuild compile their native binaries
-        - pnpm install --frozen-lockfile --allow-build=bcrypt,esbuild
+        - pnpm install --frozen-lockfile
         # Build the shared libs that the lms package depends on
         - pnpm run typecheck:libs
     build:
